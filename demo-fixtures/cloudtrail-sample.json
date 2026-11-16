@@ -1,0 +1,16 @@
+{
+  "Records": [
+    {
+      "eventTime": "2026-11-15T10:15:00Z",
+      "userIdentity": {
+        "arn": "arn:aws:sts::000000000000:assumed-role/prod-data-processor-role/worker-1"
+      },
+      "eventSource": "s3.amazonaws.com",
+      "eventName": "GetObject",
+      "requestParameters": {
+        "bucketName": "prod-invoices-archive",
+        "key": "2026/inv-001.pdf"
+      }
+    }
+  ]
+}

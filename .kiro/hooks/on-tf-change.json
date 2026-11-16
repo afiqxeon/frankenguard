@@ -1,0 +1,12 @@
+{
+  "name": "Terraform IAM Least-Privilege Guard",
+  "description": "Triggers FrankenGuard audit whenever a .tf file is saved or modified.",
+  "trigger": {
+    "type": "file_save",
+    "pattern": "**/*.tf"
+  },
+  "action": {
+    "type": "prompt",
+    "prompt": "Audit the modified Terraform file against .kiro/steering/aws-least-privilege.md and demo-fixtures/cloudtrail-sample.json. Flag any wildcard IAM actions or resources and propose a deterministic AST patch."
+  }
+}
