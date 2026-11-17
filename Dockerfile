@@ -13,8 +13,10 @@ RUN npm install
 
 COPY mcp-server ./mcp-server
 COPY core-engine ./core-engine
+COPY web-ui ./web-ui
 COPY demo-fixtures ./demo-fixtures
 
 RUN npm run build
 
+EXPOSE 3000
 CMD ["npm", "run", "mcp:start"]

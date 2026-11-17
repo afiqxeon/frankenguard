@@ -6,7 +6,8 @@
   "scripts": {
     "build": "tsc",
     "mcp:start": "node dist/mcp-server/src/index.js",
-    "demo:exorcise": "node dist/core-engine/ast-patcher/demo-cli.js"
+    "demo:exorcise": "node dist/core-engine/ast-patcher/demo-cli.js",
+    "ui:start": "node dist/web-ui/server.js"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",

@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FrankenGuard | Monster Anatomy View</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @keyframes pulseRed {
+      0%, 100% { filter: drop-shadow(0 0 6px rgba(239, 68, 68, 0.8)); }
+      50% { filter: drop-shadow(0 0 16px rgba(239, 68, 68, 1)); }
+    }
+    @keyframes pulseGreen {
+      0%, 100% { filter: drop-shadow(0 0 6px rgba(16, 185, 129, 0.8)); }
+      50% { filter: drop-shadow(0 0 16px rgba(16, 185, 129, 1)); }
+    }
+    .glow-red { animation: pulseRed 2s infinite; }
+    .glow-green { animation: pulseGreen 2s infinite; }
+    .edge-line { transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+    .node-box { transition: all 0.5s ease; }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans selection:bg-emerald-500 selection:text-slate-950">
+  <!-- Top Navigation Header -->
+  <header class="border-b border-slate-800 bg-slate-900/70 backdrop-blur sticky top-0 z-20">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/40 flex items-center justify-center text-xl">
+          🧟‍♂️
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-lg font-bold tracking-tight text-white">FrankenGuard</h1>
+            <span class="text-xs px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 font-mono">
+              Monster Anatomy View
+            </span>
+          </div>
+          <p class="text-xs text-slate-400">
+            CloudTrail Runtime Telemetry + Kiro Steering + Tree-sitter HCL AST Surgery
+          </p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <span id="statusBadge" class="px-3 py-1 rounded-full text-xs font-mono font-semibold border">
+          LOADING...
+        </span>
+        <button
+          id="btnExorcise"
+          onclick="triggerExorcism()"
+          class="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold text-sm transition shadow-lg shadow-emerald-500/20 flex items-center gap-2"
+        >
+          <span>⚡ Execute AST Exorcism</span>
+        </button>
+        <button
+          id="btnReset"
+          onclick="resetFixture()"
+          class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-sm transition"
+        >
+          Reset Vulnerable Fixture
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-6 py-6 space-y-6">
+    <!-- Top Metric Telemetry Cards -->
+    <section class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
+        <p class="text-xs uppercase tracking-wider text-slate-400 font-mono">Blast Radius Risk Score</p>
+        <div class="mt-2 flex items-baseline justify-between">
+          <span id="metricRisk" class="text-3xl font-extrabold font-mono">--</span>
+          <span id="metricRiskLabel" class="text-xs font-mono px-2 py-0.5 rounded">--</span>
+        </div>
+      </div>
+
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
+        <p class="text-xs uppercase tracking-wider text-slate-400 font-mono">Wildcard Grants (*)</p>
+        <div class="mt-2 flex items-baseline justify-between">
+          <span id="metricWildcards" class="text-3xl font-extrabold font-mono">--</span>
+          <span class="text-xs text-slate-400 font-mono">Steering Policy: 0 Allowed</span>
+        </div>
+      </div>
+
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
+        <p class="text-xs uppercase tracking-wider text-slate-400 font-mono">Privilege Escalation Vector</p>
+        <div class="mt-2 flex items-baseline justify-between">
+          <span id="metricEscalation" class="text-xl font-bold font-mono">--</span>
+          <span class="text-xs text-slate-400 font-mono">iam:PassRole</span>
+        </div>
+      </div>
+
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
+        <p class="text-xs uppercase tracking-wider text-slate-400 font-mono">CloudTrail Observed Calls</p>
+        <div class="mt-2 flex items-baseline justify-between">
+          <span id="metricObserved" class="text-xl font-bold font-mono text-emerald-400">s3:GetObject</span>
+          <span id="metricEvents" class="text-xs text-slate-400 font-mono">1 Event</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Interactive Monster Anatomy Topology Canvas -->
+    <section class="bg-slate-900 border border-slate-800 rounded-xl p-6">
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+        <div>
+          <h2 class="text-base font-bold text-white flex items-center gap-2">
+            <span>🧬 IAM Blast-Radius Anatomy Graph</span>
+          </h2>
+          <p class="text-xs text-slate-400">
+            Visualizing declared Terraform IAM permissions against actual CloudTrail runtime usage
+          </p>
+        </div>
+        <div class="flex items-center gap-4 text-xs font-mono">
+          <span class="flex items-center gap-1.5 text-red-400">
+            <span class="w-2.5 h-2.5 rounded-full bg-red-500 inline-block"></span> Over-Privileged Wildcard
+          </span>
+          <span class="flex items-center gap-1.5 text-emerald-400">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span> Observed Least-Privilege
+          </span>
+          <span class="flex items-center gap-1.5 text-slate-500">
+            <span class="w-2.5 h-2.5 rounded-full bg-slate-600 inline-block"></span> Severed by AST Patcher
+          </span>
+        </div>
+      </div>
+
+      <div class="w-full overflow-x-auto bg-slate-950/80 border border-slate-800/80 rounded-lg p-4">
+        <svg viewBox="0 0 900 300" class="w-full h-auto min-w-[680px]">
+          <!-- Connectors -->
+          <path id="edgeS3" d="M 300 150 C 415 150, 460 65, 580 65" fill="none" stroke="#ef4444" stroke-width="3" class="edge-line" />
+          <path id="edgeDynamo" d="M 300 150 C 415 150, 460 150, 580 150" fill="none" stroke="#ef4444" stroke-width="3" class="edge-line" />
+          <path id="edgePassRole" d="M 300 150 C 415 150, 460 235, 580 235" fill="none" stroke="#ef4444" stroke-width="3" class="edge-line" />
+
+          <!-- Left Node: IAM Role Principal -->
+          <g transform="translate(15, 105)">
+            <rect width="285" height="90" rx="12" fill="#0f172a" stroke="#3b82f6" stroke-width="2" />
+            <text x="16" y="28" fill="#93c5fd" font-size="11" font-family="monospace" font-weight="bold">AWS IAM ROLE PRINCIPAL</text>
+            <text x="16" y="50" fill="#f8fafc" font-size="13" font-family="monospace" font-weight="bold">prod-data-processor-role</text>
+            <text x="16" y="72" fill="#64748b" font-size="10" font-family="monospace">aws_iam_role_policy.overprivileged_worker</text>
+          </g>
+
+          <!-- Right Node 1: S3 -->
+          <g id="nodeS3" transform="translate(580, 25)" class="node-box">
+            <rect id="rectS3" width="290" height="80" rx="10" fill="#0f172a" stroke="#ef4444" stroke-width="2" />
+            <text id="titleS3" x="16" y="26" fill="#fca5a5" font-size="12" font-family="monospace" font-weight="bold">Action: s3:* (Wildcard)</text>
+            <text id="subS3" x="16" y="46" fill="#cbd5e1" font-size="11" font-family="monospace">Resource: "*" (All S3 Buckets)</text>
+            <text id="badgeS3" x="16" y="66" fill="#34d399" font-size="10" font-family="monospace">CloudTrail: 1x s3:GetObject observed</text>
+          </g>
+
+          <!-- Right Node 2: DynamoDB -->
+          <g id="nodeDynamo" transform="translate(580, 110)" class="node-box">
+            <rect id="rectDynamo" width="290" height="80" rx="10" fill="#0f172a" stroke="#ef4444" stroke-width="2" />
+            <text id="titleDynamo" x="16" y="26" fill="#fca5a5" font-size="12" font-family="monospace" font-weight="bold">Action: dynamodb:* (Wildcard)</text>
+            <text id="subDynamo" x="16" y="46" fill="#cbd5e1" font-size="11" font-family="monospace">Resource: "*" (All Tables)</text>
+            <text id="badgeDynamo" x="16" y="66" fill="#f87171" font-size="10" font-family="monospace">CloudTrail: 0 runtime calls (Unused Zombie)</text>
+          </g>
+
+          <!-- Right Node 3: IAM PassRole -->
+          <g id="nodePassRole" transform="translate(580, 195)" class="node-box">
+            <rect id="rectPassRole" width="290" height="80" rx="10" fill="#0f172a" stroke="#ef4444" stroke-width="2" />
+            <text id="titlePassRole" x="16" y="26" fill="#fca5a5" font-size="12" font-family="monospace" font-weight="bold">Action: iam:PassRole</text>
+            <text id="subPassRole" x="16" y="46" fill="#cbd5e1" font-size="11" font-family="monospace">Resource: "*" (Escalation Vector)</text>
+            <text id="badgePassRole" x="16" y="66" fill="#f87171" font-size="10" font-family="monospace">Steering Rule #1 Violation: High Risk</text>
+          </g>
+        </svg>
+      </div>
+    </section>
+
+    <!-- Side-by-Side Tree-sitter HCL AST Code Comparison -->
+    <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col">
+        <div class="px-4 py-3 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
+          <span class="text-xs font-mono font-semibold text-red-400">
+            BEFORE: Over-Privileged Terraform Fixture
+          </span>
+          <span class="text-xs font-mono text-slate-500">demo-fixtures/vulnerable-iam.tf (Baseline)</span>
+        </div>
+        <pre id="codeBefore" class="p-4 text-xs font-mono text-slate-300 overflow-x-auto leading-relaxed flex-1"></pre>
+      </div>
+
+      <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col">
+        <div class="px-4 py-3 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
+          <span id="liveCodeTitle" class="text-xs font-mono font-semibold text-amber-400">
+            LIVE FILE STATE (Tree-sitter HCL AST Output)
+          </span>
+          <span class="text-xs font-mono text-slate-500">aws:SourceArn Guardrail Enforced</span>
+        </div>
+        <pre id="codeAfter" class="p-4 text-xs font-mono text-emerald-300 overflow-x-auto leading-relaxed flex-1"></pre>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    /**
+     * Synchronizes UI state with the FrankenGuard backend engine.
+     */
+    async function fetchState() {
+      const response = await fetch("/api/state");
+      const data = await response.json();
+      renderState(data);
+    }
+
+    /**
+     * Triggers deterministic Tree-sitter HCL AST remediation via the backend endpoint.
+     */
+    async function triggerExorcism() {
+      const btn = document.getElementById("btnExorcise");
+      btn.disabled = true;
+      btn.innerHTML = "<span>⚡ Running AST Surgery...</span>";
+      const response = await fetch("/api/exorcise", { method: "POST" });
+      const data = await response.json();
+      renderState(data);
+      btn.disabled = false;
+    }
+
+    /**
+     * Restores the vulnerable Terraform fixture for live demo repeatability.
+     */
+    async function resetFixture() {
+      const response = await fetch("/api/reset", { method: "POST" });
+      const data = await response.json();
+      renderState(data);
+    }
+
+    /**
+     * Updates metrics, SVG blast-radius topology, and HCL code panels.
+     */
+    function renderState(state) {
+      const isExorcised = state.status === "EXORCISED";
+
+      // Header Badge
+      const badge = document.getElementById("statusBadge");
+      if (isExorcised) {
+        badge.textContent = "STATUS: LEAST-PRIVILEGE ENFORCED";
+        badge.className = "px-3 py-1 rounded-full text-xs font-mono font-semibold border bg-emerald-500/10 text-emerald-400 border-emerald-500/30";
+      } else {
+        badge.textContent = "STATUS: OVER-PRIVILEGED MONSTER DETECTED";
+        badge.className = "px-3 py-1 rounded-full text-xs font-mono font-semibold border bg-red-500/10 text-red-400 border-red-500/30";
+      }
+
+      // Metrics
+      const riskEl = document.getElementById("metricRisk");
+      const riskLabel = document.getElementById("metricRiskLabel");
+      riskEl.textContent = `${state.riskScore}/100`;
+      riskEl.className = `text-3xl font-extrabold font-mono ${isExorcised ? "text-emerald-400" : "text-red-500"}`;
+      riskLabel.textContent = isExorcised ? "-88% BLAST RADIUS" : "CRITICAL";
+      riskLabel.className = `text-xs font-mono px-2 py-0.5 rounded ${
+        isExorcised ? "bg-emerald-500/20 text-emerald-300" : "bg-red-500/20 text-red-300"
+      }`;
+
+      const wildcardsEl = document.getElementById("metricWildcards");
+      wildcardsEl.textContent = state.wildcardCount;
+      wildcardsEl.className = `text-3xl font-extrabold font-mono ${isExorcised ? "text-emerald-400" : "text-red-400"}`;
+
+      const escEl = document.getElementById("metricEscalation");
+      escEl.textContent = state.privilegeEscalationRisk ? "ACTIVE (HIGH)" : "EXORCISED (NONE)";
+      escEl.className = `text-xl font-bold font-mono ${state.privilegeEscalationRisk ? "text-red-400" : "text-emerald-400"}`;
+
+      // SVG Topology Graph Updates
+      const edgeS3 = document.getElementById("edgeS3");
+      const edgeDynamo = document.getElementById("edgeDynamo");
+      const edgePassRole = document.getElementById("edgePassRole");
+
+      if (isExorcised) {
+        edgeS3.setAttribute("stroke", "#10b981");
+        edgeS3.setAttribute("stroke-dasharray", "none");
+        document.getElementById("rectS3").setAttribute("stroke", "#10b981");
+        document.getElementById("titleS3").textContent = "Action: s3:GetObject (Scoped)";
+        document.getElementById("titleS3").setAttribute("fill", "#6ee7b7");
+        document.getElementById("subS3").textContent = "ARN: arn:aws:s3:::prod-invoices-archive/*";
+        document.getElementById("badgeS3").textContent = "Condition: aws:SourceArn Enforced";
+
+        edgeDynamo.setAttribute("stroke", "#334155");
+        edgeDynamo.setAttribute("stroke-dasharray", "6,6");
+        document.getElementById("rectDynamo").setAttribute("stroke", "#334155");
+        document.getElementById("nodeDynamo").style.opacity = "0.45";
+        document.getElementById("badgeDynamo").textContent = "SEVERED: 0 CloudTrail Calls";
+
+        edgePassRole.setAttribute("stroke", "#334155");
+        edgePassRole.setAttribute("stroke-dasharray", "6,6");
+        document.getElementById("rectPassRole").setAttribute("stroke", "#334155");
+        document.getElementById("nodePassRole").style.opacity = "0.45";
+        document.getElementById("badgePassRole").textContent = "SEVERED: Escalation Vector Removed";
+      } else {
+        edgeS3.setAttribute("stroke", "#ef4444");
+        edgeS3.setAttribute("stroke-dasharray", "none");
+        document.getElementById("rectS3").setAttribute("stroke", "#ef4444");
+        document.getElementById("titleS3").textContent = "Action: s3:* (Wildcard)";
+        document.getElementById("titleS3").setAttribute("fill", "#fca5a5");
+        document.getElementById("subS3").textContent = 'Resource: "*" (All S3 Buckets)';
+        document.getElementById("badgeS3").textContent = "CloudTrail: 1x s3:GetObject observed";
+
+        edgeDynamo.setAttribute("stroke", "#ef4444");
+        edgeDynamo.setAttribute("stroke-dasharray", "none");
+        document.getElementById("rectDynamo").setAttribute("stroke", "#ef4444");
+        document.getElementById("nodeDynamo").style.opacity = "1";
+        document.getElementById("badgeDynamo").textContent = "CloudTrail: 0 runtime calls (Unused Zombie)";
+
+        edgePassRole.setAttribute("stroke", "#ef4444");
+        edgePassRole.setAttribute("stroke-dasharray", "none");
+        document.getElementById("rectPassRole").setAttribute("stroke", "#ef4444");
+        document.getElementById("nodePassRole").style.opacity = "1";
+        document.getElementById("badgePassRole").textContent = "Steering Rule #1 Violation: High Risk";
+      }
+
+      // Code Panels
+      document.getElementById("codeBefore").textContent = state.initialTfContent;
+      document.getElementById("codeAfter").textContent = state.tfContent;
+
+      const btn = document.getElementById("btnExorcise");
+      btn.innerHTML = isExorcised ? "<span>✅ AST Patch Applied</span>" : "<span>⚡ Execute AST Exorcism</span>";
+    }
+
+    fetchState();
+  </script>
+</body>
+</html>

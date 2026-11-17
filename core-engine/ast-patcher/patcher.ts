@@ -9,10 +9,12 @@ export interface PatchDirective {
   conditionSourceArn?: string;
 }
 
-export function applyDeterministicAstPatch(
-  tfFilePath: string,
-  directive: PatchDirective,
-): string {
+/**
+ * Parses a Terraform HCL file into a concrete syntax tree and deterministically
+ * replaces only the `policy = jsonencode(...)` expression of the target IAM resource.
+ * Preserves surrounding HCL blocks, attributes, and formatting.
+ */
+export function applyDeterministicAstPatch(tfFilePath: string, directive: PatchDirective): string {
   const sourceCode = fs.readFileSync(tfFilePath, "utf-8");
   const parser = new Parser();
   parser.setLanguage(HCL as unknown as Parser.Language);
@@ -21,21 +23,18 @@ export function applyDeterministicAstPatch(
   let targetStartByte = -1;
   let targetEndByte = -1;
 
-  function traverse(node: Parser.SyntaxNode) {
+  function traverse(node: Parser.SyntaxNode): void {
     if (node.type === "block") {
       const headerText = node.text.split("{")[0];
       if (
         headerText.includes(`"aws_iam_role_policy"`) &&
         headerText.includes(`"${directive.resourceName}"`)
       ) {
-        // Find the policy = jsonencode(...) attribute inside this resource block.
+        // Locate the `policy = jsonencode(...)` attribute node inside the target resource body
         for (const child of node.namedChildren) {
           if (child.type === "body") {
             for (const item of child.namedChildren) {
-              if (
-                item.type === "attribute" &&
-                item.text.trim().startsWith("policy")
-              ) {
+              if (item.type === "attribute" && item.text.trim().startsWith("policy")) {
                 const expr = item.namedChildren[1];
                 if (expr) {
                   targetStartByte = expr.startIndex;
@@ -55,9 +54,7 @@ export function applyDeterministicAstPatch(
   traverse(tree.rootNode);
 
   if (targetStartByte === -1 || targetEndByte === -1) {
-    throw new Error(
-      `Resource aws_iam_role_policy.${directive.resourceName} tidak ditemukan dalam AST.`,
-    );
+    throw new Error(`Target resource aws_iam_role_policy.${directive.resourceName} not found in HCL AST.`);
   }
 
   const leastPrivilegePolicy: Record<string, unknown> = {
@@ -72,13 +69,13 @@ export function applyDeterministicAstPatch(
           ? {
               Condition: {
                 ArnLike: {
-                  "aws:SourceArn": directive.conditionSourceArn,
-                },
-              },
+                  "aws:SourceArn": directive.conditionSourceArn
+                }
+              }
             }
-          : {}),
-      },
-    ],
+          : {})
+      }
+    ]
   };
 
   const formattedJson = JSON.stringify(leastPrivilegePolicy, null, 4)
@@ -88,9 +85,7 @@ export function applyDeterministicAstPatch(
 
   const replacement = `jsonencode(${formattedJson})`;
   const patchedCode =
-    sourceCode.slice(0, targetStartByte) +
-    replacement +
-    sourceCode.slice(targetEndByte);
+    sourceCode.slice(0, targetStartByte) + replacement + sourceCode.slice(targetEndByte);
 
   fs.writeFileSync(tfFilePath, patchedCode, "utf-8");
   return patchedCode;
