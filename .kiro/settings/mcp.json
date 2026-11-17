@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "frankenguard-mcp": {
+      "command": "docker",
+      "args": [
+        "compose",
+        "run",
+        "--rm",
+        "-T",
+        "frankenguard-engine"
+      ],
+      "disabled": false,
+      "autoApprove": ["scan_iam_graph"]
+    }
+  }
+}
