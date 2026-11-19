@@ -1,24 +1,12 @@
 services:
-  localstack:
-    image: localstack/localstack:latest
-    container_name: frankenguard-localstack
-    ports:
-      - "4566:4566"
-    environment:
-      - SERVICES=iam,s3,cloudtrail
-      - DEFAULT_REGION=us-east-1
-    volumes:
-      - "./demo-fixtures:/fixtures"
-
   frankenguard-engine:
     build: .
     container_name: frankenguard-engine
-    stdin_open: true
-    tty: false
+    command: ["socat", "TCP-LISTEN:4444,reuseaddr,fork", "EXEC:'node dist/mcp-server/src/index.js'"]
+    ports:
+      - "127.0.0.1:4444:4444"
     volumes:
       - "./demo-fixtures:/app/demo-fixtures"
-    depends_on:
-      - localstack
 
   frankenguard-ui:
     build: .
@@ -28,5 +16,3 @@ services:
       - "3000:3000"
     volumes:
       - "./demo-fixtures:/app/demo-fixtures"
-    depends_on:
-      - localstack

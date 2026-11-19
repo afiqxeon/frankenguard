@@ -1,86 +1,138 @@
 import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";
+import net from "node:net";
 import { applyDeterministicAstPatch } from "../core-engine/ast-patcher/patcher.js";
+import {
+  DEMO_SCENARIOS,
+  activateScenarioFixtures,
+  parseCloudTrailTelemetry
+} from "../core-engine/scenarios.js";
 
 const PORT = Number(process.env.PORT ?? 3000);
 const TF_PATH = path.resolve("./demo-fixtures/vulnerable-iam.tf");
 const TRAIL_PATH = path.resolve("./demo-fixtures/cloudtrail-sample.json");
 const HTML_PATH = path.resolve("./web-ui/index.html");
 
-const INITIAL_VULNERABLE_TF = `resource "aws_iam_role_policy" "overprivileged_worker" {
-  name = "frankenguard-demo-worker-policy"
-  role = "prod-data-processor-role"
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect   = "Allow"
-        Action   = [
-          "s3:*",
-          "dynamodb:*",
-          "iam:PassRole"
-        ]
-        Resource = "*"
-      }
-    ]
-  })
-}
-`;
-
-interface TelemetrySummary {
-  observedActions: string[];
-  observedResources: string[];
-  principalArn: string;
-  eventCount: number;
-}
+let activeScenarioId = "s3-worker";
+let isMcpConnected = true;
 
 /**
- * Extracts runtime API invocations and target ARNs from AWS CloudTrail logs.
+ * Probes whether the FrankenGuard MCP Engine (port 4444) is active and accepting connections.
  */
-function analyzeTelemetry(): TelemetrySummary {
-  const raw = JSON.parse(fs.readFileSync(TRAIL_PATH, "utf-8"));
-  const actions = new Set<string>();
-  const resources = new Set<string>();
-  let principalArn = "arn:aws:sts::000000000000:assumed-role/prod-data-processor-role/*";
+async function probeMcpServer(): Promise<boolean> {
+  const host =
+    process.env.MCP_HOST ||
+    (fs.existsSync("/.dockerenv") ? "frankenguard-engine" : "127.0.0.1");
+  const port = Number(process.env.MCP_PORT || 4444);
 
-  for (const record of raw.Records ?? []) {
-    const service = String(record.eventSource).split(".")[0];
-    actions.add(`${service}:${record.eventName}`);
-    if (record.requestParameters?.bucketName) {
-      resources.add(`arn:aws:s3:::${record.requestParameters.bucketName}/*`);
-    }
-    if (record.userIdentity?.arn) {
-      principalArn = record.userIdentity.arn;
-    }
-  }
+  return new Promise((resolve) => {
+    const socket = new net.Socket();
+    let settled = false;
 
-  return {
-    observedActions: Array.from(actions),
-    observedResources: Array.from(resources),
-    principalArn,
-    eventCount: (raw.Records ?? []).length
-  };
+    const done = (status: boolean) => {
+      if (settled) return;
+      settled = true;
+      socket.destroy();
+      resolve(status);
+    };
+
+    socket.setTimeout(400);
+    socket.on("connect", () => done(true));
+    socket.on("timeout", () => done(false));
+    socket.on("error", () => {
+      if (host !== "127.0.0.1") {
+        const fallback = new net.Socket();
+        fallback.setTimeout(300);
+        fallback.on("connect", () => {
+          fallback.destroy();
+          done(true);
+        });
+        fallback.on("error", () => {
+          fallback.destroy();
+          done(false);
+        });
+        fallback.connect(port, "127.0.0.1");
+      } else {
+        done(false);
+      }
+    });
+    socket.connect(port, host);
+  });
+}
+
+setInterval(async () => {
+  isMcpConnected = await probeMcpServer();
+}, 2500);
+probeMcpServer().then((res) => {
+  isMcpConnected = res;
+});
+
+/**
+ * Extracts declared IAM actions from the initial vulnerable Terraform HCL string.
+ */
+function extractDeclaredActions(hcl: string): string[] {
+  const match = hcl.match(/Action\s*=\s*\[([\s\S]*?)\]/);
+  if (!match) return [];
+  return Array.from(match[1].matchAll(/"([^"]+)"/g)).map((m) => m[1]);
 }
 
 /**
- * Evaluates current Terraform file state to calculate blast-radius risk metrics.
+ * Evaluates current Terraform file state, active scenario metadata, and dynamic graph edges.
  */
 function buildSystemState() {
+  const scenario = DEMO_SCENARIOS[activeScenarioId] ?? DEMO_SCENARIOS["s3-worker"];
   const tfContent = fs.readFileSync(TF_PATH, "utf-8");
-  const telemetry = analyzeTelemetry();
+  const telemetry = parseCloudTrailTelemetry(TRAIL_PATH);
   const isPatched = tfContent.includes("FrankenGuardLeastPrivilege");
 
+  const declaredActions = extractDeclaredActions(scenario.vulnerableTf);
+  const escalationActions = ["iam:PassRole", "iam:*", "iam:CreateAccessKey", "iam:PutRolePolicy", "sts:AssumeRole"];
+  const hasEscalation =
+    !isPatched && declaredActions.some((act) => escalationActions.includes(act));
+  const wildcardCount = isPatched
+    ? 0
+    : declaredActions.filter((a) => a.includes("*")).length + 1;
+
+  // Build dynamic topology nodes for the Monster Anatomy SVG graph
+  const graphNodes = declaredActions.map((action) => {
+    const servicePrefix = action.split(":")[0];
+    const matchedList = telemetry.observedActions.filter((obs) =>
+      obs.startsWith(`${servicePrefix}:`)
+    );
+    const matchedObserved = matchedList.length > 0 ? matchedList.join(", ") : null;
+    const isEscalationNode = escalationActions.includes(action);
+
+    return {
+      declaredAction: action,
+      observedAction: matchedObserved ?? null,
+      targetResource:
+        telemetry.observedResources.find((r) => r.includes(`:${servicePrefix}:`)) ??
+        telemetry.observedResources[0] ??
+        "*",
+      scopedSourceArn: telemetry.scopedSourceArn,
+      isUsed: Boolean(matchedObserved),
+      isEscalation: isEscalationNode
+    };
+  });
+
   return {
+    activeScenarioId: scenario.id,
+    scenarios: Object.values(DEMO_SCENARIOS).map((s) => ({ id: s.id, label: s.label })),
+    roleName: scenario.roleName,
+    resourceName: scenario.resourceName,
     status: isPatched ? "EXORCISED" : "VULNERABLE",
-    riskScore: isPatched ? 8 : 96,
-    blastRadiusServices: isPatched ? 1 : 3,
-    wildcardCount: isPatched ? 0 : 4,
-    privilegeEscalationRisk: !isPatched && tfContent.includes("iam:PassRole"),
+    riskScore: isPatched ? 8 : scenario.initialRiskScore,
+    blastRadiusReduction: Math.round(
+      ((scenario.initialRiskScore - 8) / scenario.initialRiskScore) * 100
+    ),
+    wildcardCount,
+    privilegeEscalationRisk: hasEscalation,
     tfContent,
-    initialTfContent: INITIAL_VULNERABLE_TF,
-    telemetry
+    initialTfContent: scenario.vulnerableTf,
+    telemetry,
+    graphNodes,
+    mcpConnected: isMcpConnected
   };
 }
 
@@ -102,20 +154,68 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  if (
+    req.method === "GET" &&
+    req.url &&
+    (req.url === "/logo.png" ||
+      req.url === "/logo.webp" ||
+      req.url === "/favicon.ico" ||
+      req.url === "/tailwind.css")
+  ) {
+    const filename = req.url === "/favicon.ico" ? "logo.png" : req.url.slice(1);
+    const filePath = path.resolve("./web-ui", filename);
+    if (fs.existsSync(filePath)) {
+      const ext = path.extname(filePath).toLowerCase();
+      const mime =
+        ext === ".webp"
+          ? "image/webp"
+          : ext === ".css"
+            ? "text/css"
+            : "image/png";
+      res.writeHead(200, { "Content-Type": mime });
+      res.end(fs.readFileSync(filePath, null));
+      return;
+    }
+  }
+
   if (req.method === "GET" && req.url === "/api/state") {
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify(buildSystemState()));
     return;
   }
 
+  if (req.method === "POST" && req.url === "/api/scenario") {
+    let body = "";
+    req.on("data", (chunk) => {
+      body += chunk;
+    });
+    req.on("end", () => {
+      try {
+        const parsed = JSON.parse(body || "{}");
+        const nextId = String(parsed.scenarioId || "s3-worker");
+        if (DEMO_SCENARIOS[nextId]) {
+          activeScenarioId = nextId;
+          activateScenarioFixtures(activeScenarioId, TF_PATH, TRAIL_PATH);
+        }
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify(buildSystemState()));
+      } catch (err) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: (err as Error).message }));
+      }
+    });
+    return;
+  }
+
   if (req.method === "POST" && req.url === "/api/exorcise") {
     try {
-      const telemetry = analyzeTelemetry();
+      const scenario = DEMO_SCENARIOS[activeScenarioId] ?? DEMO_SCENARIOS["s3-worker"];
+      const telemetry = parseCloudTrailTelemetry(TRAIL_PATH);
       applyDeterministicAstPatch(TF_PATH, {
-        resourceName: "overprivileged_worker",
+        resourceName: scenario.resourceName,
         allowedActions: telemetry.observedActions,
         targetResources: telemetry.observedResources,
-        conditionSourceArn: "arn:aws:sts::000000000000:assumed-role/prod-data-processor-role/*"
+        conditionSourceArn: telemetry.scopedSourceArn
       });
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end(JSON.stringify(buildSystemState()));
@@ -127,7 +227,7 @@ const server = http.createServer((req, res) => {
   }
 
   if (req.method === "POST" && req.url === "/api/reset") {
-    fs.writeFileSync(TF_PATH, INITIAL_VULNERABLE_TF, "utf-8");
+    activateScenarioFixtures(activeScenarioId, TF_PATH, TRAIL_PATH);
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify(buildSystemState()));
     return;

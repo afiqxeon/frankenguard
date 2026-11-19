@@ -10,9 +10,20 @@ export interface PatchDirective {
 }
 
 /**
+ * Formats an array or single string into idiomatic Terraform HCL2 syntax.
+ */
+function formatHclList(items: string[], indent: string): string {
+  if (items.length === 1) {
+    return `"${items[0]}"`;
+  }
+  const body = items.map((item) => `${indent}  "${item}",`).join("\n");
+  return `[\n${body}\n${indent}]`;
+}
+
+/**
  * Parses a Terraform HCL file into a concrete syntax tree and deterministically
- * replaces only the `policy = jsonencode(...)` expression of the target IAM resource.
- * Preserves surrounding HCL blocks, attributes, and formatting.
+ * replaces only the `policy = jsonencode(...)` expression of the target IAM resource
+ * using idiomatic HCL2 map assignment (`=`) while preserving surrounding blocks.
  */
 export function applyDeterministicAstPatch(tfFilePath: string, directive: PatchDirective): string {
   const sourceCode = fs.readFileSync(tfFilePath, "utf-8");
@@ -57,33 +68,33 @@ export function applyDeterministicAstPatch(tfFilePath: string, directive: PatchD
     throw new Error(`Target resource aws_iam_role_policy.${directive.resourceName} not found in HCL AST.`);
   }
 
-  const leastPrivilegePolicy: Record<string, unknown> = {
-    Version: "2012-10-17",
-    Statement: [
+  const enforcedSourceArn =
+    directive.conditionSourceArn ??
+    "arn:aws:sts::987654321098:assumed-role/prod-data-processor-role/*";
+
+  const actionsHcl = directive.allowedActions.map((a) => `          "${a}"`).join(",\n");
+  const resourceHcl = formatHclList(directive.targetResources, "        ");
+
+  // Generate idiomatic HCL2 expression matching baseline formatting and Steering Rule #4
+  const replacement = `jsonencode({
+    Version = "2012-10-17"
+    Statement = [
       {
-        Sid: "FrankenGuardLeastPrivilege",
-        Effect: "Allow",
-        Action: directive.allowedActions,
-        Resource: directive.targetResources,
-        ...(directive.conditionSourceArn
-          ? {
-              Condition: {
-                ArnLike: {
-                  "aws:SourceArn": directive.conditionSourceArn
-                }
-              }
-            }
-          : {})
+        Sid      = "FrankenGuardLeastPrivilege"
+        Effect   = "Allow"
+        Action   = [
+${actionsHcl}
+        ]
+        Resource = ${resourceHcl}
+        Condition = {
+          ArnLike = {
+            "aws:SourceArn" = "${enforcedSourceArn}"
+          }
+        }
       }
     ]
-  };
+  })`;
 
-  const formattedJson = JSON.stringify(leastPrivilegePolicy, null, 4)
-    .split("\n")
-    .map((line, idx) => (idx === 0 ? line : `  ${line}`))
-    .join("\n");
-
-  const replacement = `jsonencode(${formattedJson})`;
   const patchedCode =
     sourceCode.slice(0, targetStartByte) + replacement + sourceCode.slice(targetEndByte);
 

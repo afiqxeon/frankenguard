@@ -1,16 +1,16 @@
 {
   "mcpServers": {
     "frankenguard-mcp": {
-      "command": "docker",
+      "command": "sh",
       "args": [
-        "compose",
-        "run",
-        "--rm",
-        "-T",
-        "frankenguard-engine"
+        "-c",
+        "nc 127.0.0.1 4444 || docker exec -i frankenguard-engine node dist/mcp-server/src/index.js"
       ],
       "disabled": false,
-      "autoApprove": ["scan_iam_graph"]
+      "autoApprove": [
+        "scan_iam_graph",
+        "apply_ast_patch"
+      ]
     }
   }
 }

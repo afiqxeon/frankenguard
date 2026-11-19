@@ -4,6 +4,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
     make \
     g++ \
+    socat \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -18,5 +19,5 @@ COPY demo-fixtures ./demo-fixtures
 
 RUN npm run build
 
-EXPOSE 3000
+EXPOSE 3000 4444
 CMD ["npm", "run", "mcp:start"]

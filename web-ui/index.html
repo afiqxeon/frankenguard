@@ -1,316 +1,1336 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en" class="dark">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FrankenGuard | Monster Anatomy View</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    @keyframes pulseRed {
-      0%, 100% { filter: drop-shadow(0 0 6px rgba(239, 68, 68, 0.8)); }
-      50% { filter: drop-shadow(0 0 16px rgba(239, 68, 68, 1)); }
-    }
-    @keyframes pulseGreen {
-      0%, 100% { filter: drop-shadow(0 0 6px rgba(16, 185, 129, 0.8)); }
-      50% { filter: drop-shadow(0 0 16px rgba(16, 185, 129, 1)); }
-    }
-    .glow-red { animation: pulseRed 2s infinite; }
-    .glow-green { animation: pulseGreen 2s infinite; }
-    .edge-line { transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
-    .node-box { transition: all 0.5s ease; }
-  </style>
-</head>
-<body class="bg-slate-950 text-slate-100 min-h-screen font-sans selection:bg-emerald-500 selection:text-slate-950">
-  <!-- Top Navigation Header -->
-  <header class="border-b border-slate-800 bg-slate-900/70 backdrop-blur sticky top-0 z-20">
-    <div class="max-w-7xl mx-auto px-6 py-4 flex flex-wrap items-center justify-between gap-4">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/40 flex items-center justify-center text-xl">
-          🧟‍♂️
-        </div>
-        <div>
-          <div class="flex items-center gap-2">
-            <h1 class="text-lg font-bold tracking-tight text-white">FrankenGuard</h1>
-            <span class="text-xs px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 font-mono">
-              Monster Anatomy View
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FrankenGuard — Monster Anatomy View</title>
+    <link rel="icon" type="image/png" href="logo.png" />
+    <script>
+      // Suppress Tailwind Play CDN production warning
+      (function () {
+        const origWarn = console.warn;
+        console.warn = function (...args) {
+          if (
+            args[0] &&
+            typeof args[0] === "string" &&
+            args[0].includes("cdn.tailwindcss.com")
+          ) {
+            return;
+          }
+          origWarn.apply(console, args);
+        };
+      })();
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      @keyframes frankenFlash {
+        0% {
+          box-shadow: inset 0 0 0 0 rgba(16, 185, 129, 0);
+        }
+        25% {
+          box-shadow: inset 0 0 120px 25px rgba(16, 185, 129, 0.45);
+        }
+        100% {
+          box-shadow: inset 0 0 0 0 rgba(16, 185, 129, 0);
+        }
+      }
+      body.exorcism-flash {
+        animation: frankenFlash 1.4s ease-out;
+      }
+      .diff-del {
+        background: rgba(239, 68, 68, 0.18);
+        color: #fca5a5;
+        display: block;
+        padding: 0 4px;
+        border-left: 2px solid #ef4444;
+      }
+      .diff-add {
+        background: rgba(16, 185, 129, 0.18);
+        color: #6ee7b7;
+        display: block;
+        padding: 0 4px;
+        border-left: 2px solid #10b981;
+      }
+    </style>
+  </head>
+  <body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased">
+    <div class="max-w-7xl mx-auto px-4 py-4 space-y-4">
+      <!-- Top Control Bar (Executive Two-Tier Layout) -->
+      <header
+        class="bg-gradient-to-b from-slate-900/95 to-slate-950/95 border border-slate-800/90 rounded-2xl p-4 shadow-xl shadow-black/40 space-y-3.5"
+      >
+        <!-- Tier 1: Brand & Status -->
+        <div
+          class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 pb-3 border-b border-slate-800/70"
+        >
+          <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div
+              class="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center p-0.5 shadow-inner shrink-0 overflow-hidden"
+            >
+              <img
+                src="logo.png"
+                alt="FrankenGuard"
+                class="w-full h-full object-contain drop-shadow-[0_0_8px_rgba(56,189,248,0.5)]"
+              />
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-2 flex-wrap">
+                <h1
+                  class="text-sm sm:text-base font-bold tracking-tight text-white whitespace-nowrap"
+                >
+                  FrankenGuard
+                </h1>
+                <span
+                  class="text-[11px] sm:text-xs font-mono px-2 py-0.5 rounded-md bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-medium whitespace-nowrap"
+                  >Monster Anatomy View</span
+                >
+              </div>
+              <p class="text-[10.5px] sm:text-xs text-slate-400 mt-0.5 leading-snug">
+                AWS CloudTrail Telemetry • Kiro Steering • Tree-sitter HCL AST Surgery
+              </p>
+            </div>
+          </div>
+
+          <div class="shrink-0 flex items-center w-full sm:w-auto">
+            <span
+              id="statusBadge"
+              class="inline-flex items-center justify-center sm:justify-start px-3 py-1 rounded-full text-xs font-mono font-semibold border bg-red-500/10 text-red-400 border-red-500/30 whitespace-nowrap shadow-sm w-full sm:w-auto"
+            >
+              <span
+                class="w-2 h-2 rounded-full bg-red-400 inline-block mr-1.5 animate-pulse"
+              ></span
+              >STATUS: OVER-PRIVILEGED MONSTER DETECTED
             </span>
           </div>
-          <p class="text-xs text-slate-400">
-            CloudTrail Runtime Telemetry + Kiro Steering + Tree-sitter HCL AST Surgery
-          </p>
+        </div>
+
+        <!-- Tier 2: Scenario Selector & Action Toolbar -->
+        <div
+          class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3"
+        >
+          <!-- Scenario Preset Selector -->
+          <div
+            class="flex items-center gap-2 min-w-0 w-full sm:flex-1 sm:max-w-xl bg-slate-950/80 border border-indigo-500/30 hover:border-indigo-400/60 focus-within:border-indigo-500/80 rounded-xl px-3 py-2 sm:py-1.5 transition shadow-inner"
+          >
+            <span
+              class="text-xs font-mono uppercase tracking-wider text-indigo-300 font-bold whitespace-nowrap select-none shrink-0"
+            >
+              Scenario (5):
+            </span>
+            <select
+              id="scenarioSelect"
+              onchange="switchScenario(this.value)"
+              title="Switch between 5 real-world AWS IAM attack scenarios"
+              class="bg-transparent text-slate-100 text-xs font-mono focus:outline-none cursor-pointer w-full truncate pr-1"
+            >
+              <option value="s3-worker" class="bg-slate-900 text-slate-100">
+                Data Lake Invoice Worker (S3 + PassRole Escalation)
+              </option>
+              <option value="cicd-deployer" class="bg-slate-900 text-slate-100">
+                GitHub Actions CI/CD Bot (EC2 + Full IAM Takeover)
+              </option>
+              <option
+                value="payment-webhook"
+                class="bg-slate-900 text-slate-100"
+              >
+                Stripe Payment Webhook (Secrets + KMS Key Hijack)
+              </option>
+              <option
+                value="bedrock-inference"
+                class="bg-slate-900 text-slate-100"
+              >
+                GenAI Bedrock Summarizer (LLM Cost &amp; Policy Injection)
+              </option>
+              <option
+                value="sqs-order-consumer"
+                class="bg-slate-900 text-slate-100"
+              >
+                Order Fulfillment Queue Consumer (Multi-Action SQS)
+              </option>
+            </select>
+          </div>
+
+          <!-- Action Buttons Group (Thumb-Friendly Controls) -->
+          <div class="flex items-center gap-2 w-full sm:w-auto shrink-0">
+            <button
+              id="btnExorcise"
+              onclick="triggerExorcism()"
+              class="flex-1 sm:flex-none justify-center px-4 py-2.5 sm:py-1.5 rounded-xl sm:rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] text-white shadow-lg shadow-emerald-950/40 transition cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0"
+            >
+              <span>⚡ Execute AST Exorcism</span>
+            </button>
+
+            <button
+              id="btnReset"
+              onclick="resetFixture()"
+              class="hidden flex-1 sm:flex-none justify-center px-4 py-2.5 sm:py-1.5 rounded-xl sm:rounded-lg text-xs font-medium bg-slate-800/90 hover:bg-slate-700 active:scale-[0.98] text-slate-200 border border-slate-700/80 hover:border-slate-600 transition cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0"
+            >
+              <span>↺ Reset Fixture</span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <!-- Contextual UX Guidance Banner with 1-Click Prompt Copy -->
+      <div
+        id="uxGuidanceBar"
+        class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 sm:px-4 sm:py-2.5 rounded-xl bg-indigo-950/50 border border-indigo-500/30 text-xs text-slate-300 shadow-sm"
+      >
+        <div class="flex items-start sm:items-center gap-2.5 min-w-0">
+          <span
+            id="guidanceBadge"
+            class="px-2 py-0.5 rounded-md bg-indigo-500/25 text-indigo-300 font-mono text-[11px] sm:text-xs font-bold uppercase whitespace-nowrap shrink-0 border border-indigo-500/30 tracking-wide"
+            >Next Step</span
+          >
+          <span id="uxGuidanceText" class="leading-relaxed text-slate-300"
+            >Copy the prompt (or type
+            <code
+              class="px-1.5 py-0.5 rounded bg-slate-900/90 text-indigo-300 font-mono text-[11px] border border-slate-800"
+              >/exorcise-iam</code
+            >
+            in Kiro) for autonomous MCP audit, or click
+            <strong class="text-emerald-400">⚡ Execute AST Exorcism</strong
+            >.</span
+          >
+        </div>
+        <div
+          class="flex items-center gap-2 w-full sm:w-auto shrink-0 pt-2 sm:pt-0 border-t border-indigo-500/15 sm:border-0 justify-between sm:justify-end"
+        >
+          <button
+            id="btnCopyPrompt"
+            onclick="copyKiroPrompt()"
+            class="flex-1 sm:flex-none justify-center shrink-0 whitespace-nowrap px-3.5 py-2 sm:py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white font-mono text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 shadow-md shadow-indigo-950/50"
+          >
+            📋 Copy Kiro Prompt
+          </button>
+          <span
+            class="whitespace-nowrap font-mono text-[11px] text-slate-400 px-1 sm:hidden lg:inline"
+            >Sync: 1.2s</span
+          >
         </div>
       </div>
 
-      <div class="flex items-center gap-3">
-        <span id="statusBadge" class="px-3 py-1 rounded-full text-xs font-mono font-semibold border">
-          LOADING...
-        </span>
-        <button
-          id="btnExorcise"
-          onclick="triggerExorcism()"
-          class="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-semibold text-sm transition shadow-lg shadow-emerald-500/20 flex items-center gap-2"
+      <!-- KPI Metrics Strip (Fully Responsive 2x2 on Mobile/Tablet, 4x1 on Desktop) -->
+      <section class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <!-- Card 1: Risk Score -->
+        <div
+          class="bg-slate-900/80 border border-slate-800 rounded-xl p-3 sm:p-3.5 flex flex-col justify-between shadow-sm"
         >
-          <span>⚡ Execute AST Exorcism</span>
-        </button>
-        <button
-          id="btnReset"
-          onclick="resetFixture()"
-          class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-sm transition"
+          <div
+            class="text-[11px] sm:text-xs font-mono uppercase tracking-wider text-slate-400 truncate"
+            title="Blast Radius Risk Score"
+          >
+            Blast Radius Risk
+          </div>
+          <div class="mt-2 flex items-center justify-between gap-1.5 sm:gap-2">
+            <span
+              id="metricRisk"
+              class="text-2xl sm:text-3xl font-extrabold font-mono text-red-500 leading-none"
+              >96/100</span
+            >
+            <span
+              id="metricRiskLabel"
+              class="shrink-0 text-[10px] sm:text-xs font-mono px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md bg-red-500/20 text-red-300 font-semibold border border-red-500/30 whitespace-nowrap shadow-sm"
+              >CRITICAL</span
+            >
+          </div>
+        </div>
+
+        <!-- Card 2: Wildcard Grants -->
+        <div
+          class="bg-slate-900/80 border border-slate-800 rounded-xl p-3 sm:p-3.5 flex flex-col justify-between shadow-sm"
         >
-          Reset Vulnerable Fixture
-        </button>
-      </div>
+          <div
+            class="text-[11px] sm:text-xs font-mono uppercase tracking-wider text-slate-400 truncate"
+            title="Wildcard Grants (*)"
+          >
+            Wildcard Grants (*)
+          </div>
+          <div
+            class="mt-1.5 flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-1"
+          >
+            <span
+              id="metricWildcards"
+              class="text-2xl sm:text-3xl font-extrabold font-mono text-red-400 leading-none"
+              >3</span
+            >
+            <span
+              class="text-[11px] sm:text-xs font-mono text-slate-400 truncate"
+              title="Steering Policy: 0 Allowed"
+              >Steering: 0 Allowed</span
+            >
+          </div>
+        </div>
+
+        <!-- Card 3: Privilege Escalation -->
+        <div
+          class="bg-slate-900/80 border border-slate-800 rounded-xl p-3 sm:p-3.5 flex flex-col justify-between shadow-sm"
+        >
+          <div class="flex items-center justify-between gap-1.5 min-w-0">
+            <span
+              class="text-[11px] sm:text-xs font-mono uppercase tracking-wider text-slate-400 truncate"
+              title="Privilege Escalation Vector"
+              >Privilege Escalation</span
+            >
+            <span
+              id="metricEscalationTag"
+              class="shrink-0 text-[10px] sm:text-[11px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 max-w-[90px] sm:max-w-none truncate"
+              >iam:PassRole</span
+            >
+          </div>
+          <div class="mt-1.5">
+            <span
+              id="metricEscalation"
+              class="block text-base sm:text-lg font-extrabold font-mono text-red-400 whitespace-nowrap truncate"
+              >ACTIVE (HIGH)</span
+            >
+          </div>
+        </div>
+
+        <!-- Card 4: Observed Calls -->
+        <div
+          class="bg-slate-900/80 border border-slate-800 rounded-xl p-3 sm:p-3.5 flex flex-col justify-between shadow-sm"
+        >
+          <div class="flex items-center justify-between gap-1.5 min-w-0">
+            <span
+              class="text-[11px] sm:text-xs font-mono uppercase tracking-wider text-slate-400 truncate"
+              title="CloudTrail Observed Calls"
+              >Observed Calls</span
+            >
+            <span
+              id="metricEvents"
+              class="shrink-0 text-[10px] sm:text-[11px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700"
+              >1 Event</span
+            >
+          </div>
+          <div id="metricObserved" class="mt-1.5 flex flex-col gap-1 min-w-0">
+            <span class="text-xs font-bold font-mono text-emerald-400 truncate"
+              >s3:GetObject</span
+            >
+          </div>
+        </div>
+      </section>
+
+      <!-- Dynamic SVG Blast Radius Anatomy Graph -->
+      <section class="bg-slate-900/80 border border-slate-800 rounded-xl p-3.5 sm:p-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-3">
+          <div>
+            <h2 class="text-sm font-bold text-white flex items-center gap-1.5">
+              <span>⚡</span>
+              <span>IAM Blast-Radius Anatomy Graph</span>
+            </h2>
+            <p class="text-[11px] sm:text-xs text-slate-400 mt-0.5">
+              Visualizing declared Terraform IAM permissions against runtime CloudTrail usage
+            </p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2 sm:gap-3 text-[11px] sm:text-xs font-mono">
+            <span class="flex items-center gap-1.5 text-red-400 whitespace-nowrap"
+              ><span class="w-2 h-2 rounded-full bg-red-500 shrink-0"></span>
+              Over-Privileged Wildcard</span
+            >
+            <span class="flex items-center gap-1.5 text-emerald-400 whitespace-nowrap"
+              ><span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
+              Exorcised Least-Privilege</span
+            >
+            <span class="flex items-center gap-1.5 text-slate-400 whitespace-nowrap"
+              ><span class="w-2 h-2 rounded-full bg-slate-500 shrink-0"></span> Severed
+              by AST Patcher</span
+            >
+          </div>
+        </div>
+
+        <!-- Touch-Friendly Scrollable Canvas for Graph -->
+        <div class="relative overflow-x-auto rounded-xl border border-slate-800/80 bg-slate-950/70 p-2 sm:p-4">
+          <div class="max-w-[640px] mx-auto min-w-[500px] sm:min-w-0">
+            <svg
+              id="anatomySvg"
+              viewBox="0 0 620 330"
+              class="w-full h-auto block mx-auto"
+            ></svg>
+          </div>
+        </div>
+        <div class="sm:hidden flex items-center justify-between text-[11px] font-mono text-slate-500 mt-1.5 px-1">
+          <span>↔ Pan horizontally for graph details</span>
+          <span class="text-indigo-400/80">Interactive Canvas</span>
+        </div>
+      </section>
+
+      <!-- Side-by-Side Surgical AST Diff Panels with Responsive Mobile Tabs -->
+      <section class="space-y-2">
+        <!-- Mobile Tab Switcher (Visible only on < lg screens) -->
+        <div
+          class="flex lg:hidden rounded-xl bg-slate-900/90 p-1 border border-slate-800/90 shadow-inner"
+        >
+          <button
+            id="diffTabBefore"
+            onclick="switchDiffTab('before')"
+            class="flex-1 py-2 px-3 rounded-lg text-xs font-mono font-bold transition flex items-center justify-center gap-1.5 bg-slate-800 text-red-400 shadow-sm border border-slate-700/60"
+          >
+            <span class="w-2 h-2 rounded-full bg-red-500"></span>
+            <span>Before (Vulnerable)</span>
+          </button>
+          <button
+            id="diffTabAfter"
+            onclick="switchDiffTab('after')"
+            class="flex-1 py-2 px-3 rounded-lg text-xs font-mono font-medium text-slate-400 hover:text-emerald-400 transition flex items-center justify-center gap-1.5"
+          >
+            <span class="w-2 h-2 rounded-full bg-emerald-500/40"></span>
+            <span>After (Patched AST)</span>
+          </button>
+        </div>
+
+        <!-- Diff Panels Container: 1 Col on Mobile (toggled via tab), 2 Cols on lg+ (both side-by-side) -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          <div
+            id="panelDiffBefore"
+            class="bg-slate-900/80 border border-slate-800 rounded-xl overflow-hidden flex flex-col"
+          >
+            <div
+              class="px-3.5 py-2.5 bg-slate-900 border-b border-slate-800 flex items-center justify-between gap-2"
+            >
+              <span class="text-xs font-mono font-bold text-red-400 truncate"
+                >BEFORE: Over-Privileged Fixture</span
+              >
+              <span
+                class="text-[11px] sm:text-xs font-mono text-slate-400 shrink-0"
+                >demo-fixtures/vulnerable-iam.tf</span
+              >
+            </div>
+            <pre
+              id="codeBefore"
+              class="p-3 text-[12px] sm:text-[13px] leading-relaxed font-mono text-slate-300 overflow-x-auto min-h-[220px]"
+            ></pre>
+          </div>
+
+          <div
+            id="panelDiffAfter"
+            class="hidden lg:flex bg-slate-900/80 border border-slate-800 rounded-xl overflow-hidden flex-col"
+          >
+            <div
+              class="px-3.5 py-2.5 border-b border-slate-800/80 bg-slate-950/50 flex flex-wrap items-center justify-between gap-2 text-xs"
+            >
+              <span class="text-xs font-mono font-bold text-emerald-400 truncate"
+                >LIVE FILE STATE (AST Output)</span
+              ><span
+                class="text-emerald-400 font-medium shrink-0 whitespace-nowrap text-[11px] sm:text-xs"
+                >✓ Guardrail Enforced</span
+              >
+            </div>
+            <pre
+              id="codeAfter"
+              class="p-3 text-[12px] sm:text-[13px] leading-relaxed font-mono text-slate-200 overflow-x-auto min-h-[220px]"
+            ></pre>
+          </div>
+        </div>
+      </section>
+
+      <!-- FRANKEN_STATUS_FOOTER_START -->
+      <footer
+        id="fgStatusFooter"
+        class="rounded-2xl border border-slate-800/80 bg-gradient-to-b from-slate-900/70 to-slate-950/80 p-3 sm:p-4 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 text-[11px] text-slate-400 font-mono shadow-sm"
+      >
+        <!-- Left Section: Engine & Core Stack -->
+        <div class="flex items-center gap-2 min-w-0">
+          <span class="text-xs shrink-0 select-none">🛡️</span>
+          <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5 min-w-0">
+            <strong class="text-slate-200 whitespace-nowrap">FrankenGuard Engine v1.0</strong>
+            <span class="text-slate-600 hidden sm:inline">•</span>
+            <span class="text-slate-400 text-[10.5px] sm:text-[11px]"
+              >Tree-sitter HCL2 AST + Kiro Steering Guardrails</span
+            >
+          </div>
+        </div>
+
+        <!-- Right Section: Real-Time MCP Status & Latency -->
+        <div
+          class="flex flex-wrap items-center gap-x-2.5 gap-y-1.5 text-slate-500 pt-2 lg:pt-0 border-t border-slate-800/70 lg:border-0"
+        >
+          <div class="flex items-center gap-1.5 shrink-0">
+            <span class="relative flex h-2 w-2 shrink-0">
+              <span
+                id="fgFooterDotPing"
+                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"
+              ></span>
+              <span
+                id="fgFooterDotCore"
+                class="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"
+              ></span>
+            </span>
+            <span id="fgFooterConnText" class="text-emerald-400 font-semibold whitespace-nowrap"
+              >MCP Server: Connected</span
+            >
+          </div>
+          <span class="text-slate-600">•</span>
+          <span class="whitespace-nowrap"
+            >Mode:
+            <span class="text-emerald-400/90 font-semibold"
+              >Deterministic Zero-Hallucination</span
+            ></span
+          >
+          <span class="text-slate-600">•</span>
+          <span id="fgFooterLatency" class="text-slate-400 font-medium whitespace-nowrap"
+            >Latency: --</span
+          >
+        </div>
+      </footer>
+      <!-- FRANKEN_STATUS_FOOTER_END -->
     </div>
-  </header>
 
-  <main class="max-w-7xl mx-auto px-6 py-6 space-y-6">
-    <!-- Top Metric Telemetry Cards -->
-    <section class="grid grid-cols-1 md:grid-cols-4 gap-4">
-      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
-        <p class="text-xs uppercase tracking-wider text-slate-400 font-mono">Blast Radius Risk Score</p>
-        <div class="mt-2 flex items-baseline justify-between">
-          <span id="metricRisk" class="text-3xl font-extrabold font-mono">--</span>
-          <span id="metricRiskLabel" class="text-xs font-mono px-2 py-0.5 rounded">--</span>
-        </div>
-      </div>
-
-      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
-        <p class="text-xs uppercase tracking-wider text-slate-400 font-mono">Wildcard Grants (*)</p>
-        <div class="mt-2 flex items-baseline justify-between">
-          <span id="metricWildcards" class="text-3xl font-extrabold font-mono">--</span>
-          <span class="text-xs text-slate-400 font-mono">Steering Policy: 0 Allowed</span>
-        </div>
-      </div>
-
-      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
-        <p class="text-xs uppercase tracking-wider text-slate-400 font-mono">Privilege Escalation Vector</p>
-        <div class="mt-2 flex items-baseline justify-between">
-          <span id="metricEscalation" class="text-xl font-bold font-mono">--</span>
-          <span class="text-xs text-slate-400 font-mono">iam:PassRole</span>
-        </div>
-      </div>
-
-      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4">
-        <p class="text-xs uppercase tracking-wider text-slate-400 font-mono">CloudTrail Observed Calls</p>
-        <div class="mt-2 flex items-baseline justify-between">
-          <span id="metricObserved" class="text-xl font-bold font-mono text-emerald-400">s3:GetObject</span>
-          <span id="metricEvents" class="text-xs text-slate-400 font-mono">1 Event</span>
-        </div>
-      </div>
-    </section>
-
-    <!-- Interactive Monster Anatomy Topology Canvas -->
-    <section class="bg-slate-900 border border-slate-800 rounded-xl p-6">
-      <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
-        <div>
-          <h2 class="text-base font-bold text-white flex items-center gap-2">
-            <span>🧬 IAM Blast-Radius Anatomy Graph</span>
-          </h2>
-          <p class="text-xs text-slate-400">
-            Visualizing declared Terraform IAM permissions against actual CloudTrail runtime usage
-          </p>
-        </div>
-        <div class="flex items-center gap-4 text-xs font-mono">
-          <span class="flex items-center gap-1.5 text-red-400">
-            <span class="w-2.5 h-2.5 rounded-full bg-red-500 inline-block"></span> Over-Privileged Wildcard
-          </span>
-          <span class="flex items-center gap-1.5 text-emerald-400">
-            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span> Observed Least-Privilege
-          </span>
-          <span class="flex items-center gap-1.5 text-slate-500">
-            <span class="w-2.5 h-2.5 rounded-full bg-slate-600 inline-block"></span> Severed by AST Patcher
-          </span>
-        </div>
-      </div>
-
-      <div class="w-full overflow-x-auto bg-slate-950/80 border border-slate-800/80 rounded-lg p-4">
-        <svg viewBox="0 0 900 300" class="w-full h-auto min-w-[680px]">
-          <!-- Connectors -->
-          <path id="edgeS3" d="M 300 150 C 415 150, 460 65, 580 65" fill="none" stroke="#ef4444" stroke-width="3" class="edge-line" />
-          <path id="edgeDynamo" d="M 300 150 C 415 150, 460 150, 580 150" fill="none" stroke="#ef4444" stroke-width="3" class="edge-line" />
-          <path id="edgePassRole" d="M 300 150 C 415 150, 460 235, 580 235" fill="none" stroke="#ef4444" stroke-width="3" class="edge-line" />
-
-          <!-- Left Node: IAM Role Principal -->
-          <g transform="translate(15, 105)">
-            <rect width="285" height="90" rx="12" fill="#0f172a" stroke="#3b82f6" stroke-width="2" />
-            <text x="16" y="28" fill="#93c5fd" font-size="11" font-family="monospace" font-weight="bold">AWS IAM ROLE PRINCIPAL</text>
-            <text x="16" y="50" fill="#f8fafc" font-size="13" font-family="monospace" font-weight="bold">prod-data-processor-role</text>
-            <text x="16" y="72" fill="#64748b" font-size="10" font-family="monospace">aws_iam_role_policy.overprivileged_worker</text>
-          </g>
-
-          <!-- Right Node 1: S3 -->
-          <g id="nodeS3" transform="translate(580, 25)" class="node-box">
-            <rect id="rectS3" width="290" height="80" rx="10" fill="#0f172a" stroke="#ef4444" stroke-width="2" />
-            <text id="titleS3" x="16" y="26" fill="#fca5a5" font-size="12" font-family="monospace" font-weight="bold">Action: s3:* (Wildcard)</text>
-            <text id="subS3" x="16" y="46" fill="#cbd5e1" font-size="11" font-family="monospace">Resource: "*" (All S3 Buckets)</text>
-            <text id="badgeS3" x="16" y="66" fill="#34d399" font-size="10" font-family="monospace">CloudTrail: 1x s3:GetObject observed</text>
-          </g>
-
-          <!-- Right Node 2: DynamoDB -->
-          <g id="nodeDynamo" transform="translate(580, 110)" class="node-box">
-            <rect id="rectDynamo" width="290" height="80" rx="10" fill="#0f172a" stroke="#ef4444" stroke-width="2" />
-            <text id="titleDynamo" x="16" y="26" fill="#fca5a5" font-size="12" font-family="monospace" font-weight="bold">Action: dynamodb:* (Wildcard)</text>
-            <text id="subDynamo" x="16" y="46" fill="#cbd5e1" font-size="11" font-family="monospace">Resource: "*" (All Tables)</text>
-            <text id="badgeDynamo" x="16" y="66" fill="#f87171" font-size="10" font-family="monospace">CloudTrail: 0 runtime calls (Unused Zombie)</text>
-          </g>
-
-          <!-- Right Node 3: IAM PassRole -->
-          <g id="nodePassRole" transform="translate(580, 195)" class="node-box">
-            <rect id="rectPassRole" width="290" height="80" rx="10" fill="#0f172a" stroke="#ef4444" stroke-width="2" />
-            <text id="titlePassRole" x="16" y="26" fill="#fca5a5" font-size="12" font-family="monospace" font-weight="bold">Action: iam:PassRole</text>
-            <text id="subPassRole" x="16" y="46" fill="#cbd5e1" font-size="11" font-family="monospace">Resource: "*" (Escalation Vector)</text>
-            <text id="badgePassRole" x="16" y="66" fill="#f87171" font-size="10" font-family="monospace">Steering Rule #1 Violation: High Risk</text>
-          </g>
-        </svg>
-      </div>
-    </section>
-
-    <!-- Side-by-Side Tree-sitter HCL AST Code Comparison -->
-    <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col">
-        <div class="px-4 py-3 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
-          <span class="text-xs font-mono font-semibold text-red-400">
-            BEFORE: Over-Privileged Terraform Fixture
-          </span>
-          <span class="text-xs font-mono text-slate-500">demo-fixtures/vulnerable-iam.tf (Baseline)</span>
-        </div>
-        <pre id="codeBefore" class="p-4 text-xs font-mono text-slate-300 overflow-x-auto leading-relaxed flex-1"></pre>
-      </div>
-
-      <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex flex-col">
-        <div class="px-4 py-3 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
-          <span id="liveCodeTitle" class="text-xs font-mono font-semibold text-amber-400">
-            LIVE FILE STATE (Tree-sitter HCL AST Output)
-          </span>
-          <span class="text-xs font-mono text-slate-500">aws:SourceArn Guardrail Enforced</span>
-        </div>
-        <pre id="codeAfter" class="p-4 text-xs font-mono text-emerald-300 overflow-x-auto leading-relaxed flex-1"></pre>
-      </div>
-    </section>
-  </main>
-
-  <script>
-    /**
-     * Synchronizes UI state with the FrankenGuard backend engine.
-     */
-    async function fetchState() {
-      const response = await fetch("/api/state");
-      const data = await response.json();
-      renderState(data);
-    }
-
-    /**
-     * Triggers deterministic Tree-sitter HCL AST remediation via the backend endpoint.
-     */
-    async function triggerExorcism() {
-      const btn = document.getElementById("btnExorcise");
-      btn.disabled = true;
-      btn.innerHTML = "<span>⚡ Running AST Surgery...</span>";
-      const response = await fetch("/api/exorcise", { method: "POST" });
-      const data = await response.json();
-      renderState(data);
-      btn.disabled = false;
-    }
-
-    /**
-     * Restores the vulnerable Terraform fixture for live demo repeatability.
-     */
-    async function resetFixture() {
-      const response = await fetch("/api/reset", { method: "POST" });
-      const data = await response.json();
-      renderState(data);
-    }
-
-    /**
-     * Updates metrics, SVG blast-radius topology, and HCL code panels.
-     */
-    function renderState(state) {
-      const isExorcised = state.status === "EXORCISED";
-
-      // Header Badge
-      const badge = document.getElementById("statusBadge");
-      if (isExorcised) {
-        badge.textContent = "STATUS: LEAST-PRIVILEGE ENFORCED";
-        badge.className = "px-3 py-1 rounded-full text-xs font-mono font-semibold border bg-emerald-500/10 text-emerald-400 border-emerald-500/30";
-      } else {
-        badge.textContent = "STATUS: OVER-PRIVILEGED MONSTER DETECTED";
-        badge.className = "px-3 py-1 rounded-full text-xs font-mono font-semibold border bg-red-500/10 text-red-400 border-red-500/30";
+    <script>
+      /**
+       * Fetches current system state from the backend API with live round-trip latency & connectivity probe.
+       */
+      async function fetchState() {
+        const t0 = performance.now();
+        try {
+          const response = await fetch("/api/state", { cache: "no-store" });
+          const ms = Math.max(1, Math.round(performance.now() - t0));
+          if (!response.ok) throw new Error("API HTTP " + response.status);
+          const data = await response.json();
+          renderState(data);
+          updateMcpConnectivity(true, ms, data.mcpConnected !== false);
+        } catch (err) {
+          updateMcpConnectivity(false, 0, false);
+        }
       }
 
-      // Metrics
-      const riskEl = document.getElementById("metricRisk");
-      const riskLabel = document.getElementById("metricRiskLabel");
-      riskEl.textContent = `${state.riskScore}/100`;
-      riskEl.className = `text-3xl font-extrabold font-mono ${isExorcised ? "text-emerald-400" : "text-red-500"}`;
-      riskLabel.textContent = isExorcised ? "-88% BLAST RADIUS" : "CRITICAL";
-      riskLabel.className = `text-xs font-mono px-2 py-0.5 rounded ${
-        isExorcised ? "bg-emerald-500/20 text-emerald-300" : "bg-red-500/20 text-red-300"
-      }`;
+      function updateMcpConnectivity(isHttpOk, latencyMs, isMcpOk) {
+        const dotPing = document.getElementById("fgFooterDotPing");
+        const dotCore = document.getElementById("fgFooterDotCore");
+        const connText = document.getElementById("fgFooterConnText");
+        const latencyEl = document.getElementById("fgFooterLatency");
+        if (!connText) return;
 
-      const wildcardsEl = document.getElementById("metricWildcards");
-      wildcardsEl.textContent = state.wildcardCount;
-      wildcardsEl.className = `text-3xl font-extrabold font-mono ${isExorcised ? "text-emerald-400" : "text-red-400"}`;
-
-      const escEl = document.getElementById("metricEscalation");
-      escEl.textContent = state.privilegeEscalationRisk ? "ACTIVE (HIGH)" : "EXORCISED (NONE)";
-      escEl.className = `text-xl font-bold font-mono ${state.privilegeEscalationRisk ? "text-red-400" : "text-emerald-400"}`;
-
-      // SVG Topology Graph Updates
-      const edgeS3 = document.getElementById("edgeS3");
-      const edgeDynamo = document.getElementById("edgeDynamo");
-      const edgePassRole = document.getElementById("edgePassRole");
-
-      if (isExorcised) {
-        edgeS3.setAttribute("stroke", "#10b981");
-        edgeS3.setAttribute("stroke-dasharray", "none");
-        document.getElementById("rectS3").setAttribute("stroke", "#10b981");
-        document.getElementById("titleS3").textContent = "Action: s3:GetObject (Scoped)";
-        document.getElementById("titleS3").setAttribute("fill", "#6ee7b7");
-        document.getElementById("subS3").textContent = "ARN: arn:aws:s3:::prod-invoices-archive/*";
-        document.getElementById("badgeS3").textContent = "Condition: aws:SourceArn Enforced";
-
-        edgeDynamo.setAttribute("stroke", "#334155");
-        edgeDynamo.setAttribute("stroke-dasharray", "6,6");
-        document.getElementById("rectDynamo").setAttribute("stroke", "#334155");
-        document.getElementById("nodeDynamo").style.opacity = "0.45";
-        document.getElementById("badgeDynamo").textContent = "SEVERED: 0 CloudTrail Calls";
-
-        edgePassRole.setAttribute("stroke", "#334155");
-        edgePassRole.setAttribute("stroke-dasharray", "6,6");
-        document.getElementById("rectPassRole").setAttribute("stroke", "#334155");
-        document.getElementById("nodePassRole").style.opacity = "0.45";
-        document.getElementById("badgePassRole").textContent = "SEVERED: Escalation Vector Removed";
-      } else {
-        edgeS3.setAttribute("stroke", "#ef4444");
-        edgeS3.setAttribute("stroke-dasharray", "none");
-        document.getElementById("rectS3").setAttribute("stroke", "#ef4444");
-        document.getElementById("titleS3").textContent = "Action: s3:* (Wildcard)";
-        document.getElementById("titleS3").setAttribute("fill", "#fca5a5");
-        document.getElementById("subS3").textContent = 'Resource: "*" (All S3 Buckets)';
-        document.getElementById("badgeS3").textContent = "CloudTrail: 1x s3:GetObject observed";
-
-        edgeDynamo.setAttribute("stroke", "#ef4444");
-        edgeDynamo.setAttribute("stroke-dasharray", "none");
-        document.getElementById("rectDynamo").setAttribute("stroke", "#ef4444");
-        document.getElementById("nodeDynamo").style.opacity = "1";
-        document.getElementById("badgeDynamo").textContent = "CloudTrail: 0 runtime calls (Unused Zombie)";
-
-        edgePassRole.setAttribute("stroke", "#ef4444");
-        edgePassRole.setAttribute("stroke-dasharray", "none");
-        document.getElementById("rectPassRole").setAttribute("stroke", "#ef4444");
-        document.getElementById("nodePassRole").style.opacity = "1";
-        document.getElementById("badgePassRole").textContent = "Steering Rule #1 Violation: High Risk";
+        if (isHttpOk && isMcpOk) {
+          if (dotPing)
+            dotPing.className =
+              "animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75";
+          if (dotCore)
+            dotCore.className =
+              "relative inline-flex rounded-full h-2 w-2 bg-emerald-400";
+          connText.className = "text-emerald-400 font-semibold";
+          connText.textContent = "MCP Server: Connected";
+          if (latencyEl) latencyEl.textContent = `Latency: ${latencyMs}ms`;
+        } else if (isHttpOk && !isMcpOk) {
+          if (dotPing)
+            dotPing.className =
+              "animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75";
+          if (dotCore)
+            dotCore.className =
+              "relative inline-flex rounded-full h-2 w-2 bg-amber-400";
+          connText.className = "text-amber-400 font-semibold";
+          connText.textContent = "MCP Server: Standby (Port 4444)";
+          if (latencyEl) latencyEl.textContent = `Latency: ${latencyMs}ms`;
+        } else {
+          if (dotPing)
+            dotPing.className =
+              "animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-500 opacity-75";
+          if (dotCore)
+            dotCore.className =
+              "relative inline-flex rounded-full h-2 w-2 bg-rose-500";
+          connText.className = "text-rose-400 font-semibold";
+          connText.textContent = "MCP Server: Disconnected (Retrying...)";
+          if (latencyEl) latencyEl.textContent = "Offline";
+        }
       }
 
-      // Code Panels
-      document.getElementById("codeBefore").textContent = state.initialTfContent;
-      document.getElementById("codeAfter").textContent = state.tfContent;
+      /**
+       * Switches active demo scenario fixture and updates UI immediately.
+       */
+      async function switchScenario(scenarioId) {
+        window.__lastStatus = null;
+        const response = await fetch("/api/scenario", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ scenarioId }),
+        });
+        const data = await response.json();
+        renderState(data);
+      }
 
-      const btn = document.getElementById("btnExorcise");
-      btn.innerHTML = isExorcised ? "<span>✅ AST Patch Applied</span>" : "<span>⚡ Execute AST Exorcism</span>";
-    }
+      /**
+       * Triggers deterministic Tree-sitter HCL AST remediation via backend endpoint.
+       */
+      async function triggerExorcism() {
+        const btn = document.getElementById("btnExorcise");
+        btn.disabled = true;
+        btn.innerHTML = "<span>⚡ Running AST Surgery...</span>";
+        const response = await fetch("/api/exorcise", { method: "POST" });
+        const data = await response.json();
+        renderState(data);
+        btn.disabled = false;
+      }
 
-    fetchState();
-  </script>
-</body>
+      /**
+       * Restores the active scenario vulnerable Terraform fixture.
+       */
+      async function resetFixture() {
+        window.__lastStatus = null;
+        const response = await fetch("/api/reset", { method: "POST" });
+        const data = await response.json();
+        renderState(data);
+      }
+
+      /**
+       * Escapes HTML characters for safe code diff rendering.
+       */
+      function escapeHtml(str) {
+        return str
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+      }
+
+      /**
+       * Renders dynamic SVG topology edges and permission nodes from state.graphNodes.
+       */
+      function renderAnatomyGraph(state) {
+        const svg = document.getElementById("anatomySvg");
+        const isExorcised = state.status === "EXORCISED";
+        const nodes = state.graphNodes || [];
+        const rowY = [56, 148, 240];
+
+        let svgMarkup = `
+        <g>
+          <rect x="6" y="104" width="306" height="88" rx="10" fill="#0f172a" stroke="#3b82f6" stroke-width="2" />
+          <text x="18" y="130" fill="#60a5fa" font-size="11" font-family="monospace" font-weight="bold">AWS IAM ROLE PRINCIPAL</text>
+          <text x="18" y="153" fill="#f8fafc" font-size="13" font-family="monospace" font-weight="bold">${escapeHtml(state.roleName)}</text>
+          <text x="18" y="174" fill="#94a3b8" font-size="11" font-family="monospace">aws_iam_role_policy.${escapeHtml(state.resourceName)}</text>
+        </g>
+      `;
+
+        nodes.forEach((node, idx) => {
+          const y = rowY[idx] ?? 42 + idx * 88;
+          const boxY = y - 30;
+          let strokeColor = "#ef4444";
+          let dashArray = "none";
+          let opacity = "1";
+          let titleText = `Action: ${node.declaredAction} (Wildcard)`;
+          let titleColor = "#fca5a5";
+          let subText = 'Resource: "*" (Unrestricted Blast Radius)';
+          let badgeText = node.isEscalation
+            ? "Steering Rule #1 Violation: Escalation Risk"
+            : node.isUsed
+              ? `CloudTrail: ${node.observedAction} observed`
+              : "CloudTrail: 0 runtime calls (Unused Zombie)";
+
+          if (isExorcised) {
+            if (node.isUsed) {
+              strokeColor = "#10b981";
+              titleText = `Action: ${node.observedAction} (Scoped)`;
+              titleColor = "#6ee7b7";
+              subText = `ARN: ${node.targetResource}`;
+              badgeText = "Condition: ArnLike aws:SourceArn Enforced";
+            } else {
+              strokeColor = "#334155";
+              dashArray = "6,6";
+              opacity = "0.48";
+              titleText = `Action: ${node.declaredAction}`;
+              titleColor = "#94a3b8";
+              subText = 'Resource: "*"';
+              badgeText = node.isEscalation
+                ? "SEVERED: Escalation Vector Removed"
+                : "SEVERED: 0 CloudTrail Calls";
+            }
+          }
+
+          svgMarkup += `
+          <g style="opacity: ${opacity}; transition: opacity 0.3s ease;">
+            <path d="M 280 148 C 315 148, 325 ${y}, 348 ${y}" fill="none" stroke="${strokeColor}" stroke-width="2.2" stroke-dasharray="${dashArray}" />
+            <circle cx="348" cy="${y}" r="4" fill="${strokeColor}" />
+            <rect x="356" y="${boxY}" width="552" height="62" rx="8" fill="#0f172a" stroke="${strokeColor}" stroke-width="1.8" />
+            <text x="370" y="${boxY + 20}" fill="${titleColor}" font-size="13" font-family="monospace" font-weight="bold">${escapeHtml(titleText)}</text>
+            <text x="370" y="${boxY + 37}" fill="#cbd5e1" font-size="11" font-family="monospace">${escapeHtml(subText)}</text>
+            <text x="370" y="${boxY + 52}" fill="#94a3b8" font-size="11" font-family="monospace">${escapeHtml(badgeText)}</text>
+          </g>
+        `;
+        });
+
+        svg.innerHTML = svgMarkup;
+      }
+
+      /**
+       * Updates metrics, scenario selector, SVG topology, and HCL code diff panels.
+       */
+      function renderState(state) {
+        const isExorcised = state.status === "EXORCISED";
+
+        // Sync dropdown selection without overriding user interaction
+        const selectEl = document.getElementById("scenarioSelect");
+        if (
+          selectEl &&
+          state.activeScenarioId &&
+          selectEl.value !== state.activeScenarioId
+        ) {
+          selectEl.value = state.activeScenarioId;
+        }
+
+        // Header Status Badge
+        const badge = document.getElementById("statusBadge");
+        if (isExorcised) {
+          badge.innerHTML =
+            '<span class="w-2 h-2 rounded-full bg-emerald-400 inline-block mr-1.5 shadow-[0_0_8px_rgba(52,211,153,0.8)]"></span>STATUS: LEAST-PRIVILEGE ENFORCED';
+          badge.className =
+            "inline-flex items-center justify-center sm:justify-start px-3 py-1 rounded-full text-xs font-mono font-semibold border bg-emerald-500/10 text-emerald-400 border-emerald-500/30 whitespace-nowrap shadow-sm w-full sm:w-auto";
+        } else {
+          badge.innerHTML =
+            '<span class="w-2 h-2 rounded-full bg-red-400 inline-block mr-1.5 animate-pulse shadow-[0_0_8px_rgba(248,113,113,0.8)]"></span>STATUS: OVER-PRIVILEGED MONSTER DETECTED';
+          badge.className =
+            "inline-flex items-center justify-center sm:justify-start px-3 py-1 rounded-full text-xs font-mono font-semibold border bg-red-500/10 text-red-400 border-red-500/30 whitespace-nowrap shadow-sm w-full sm:w-auto";
+        }
+
+        // KPI Cards
+        const riskEl = document.getElementById("metricRisk");
+        const riskLabel = document.getElementById("metricRiskLabel");
+        riskEl.textContent = `${state.riskScore}/100`;
+        riskEl.className = `text-2xl sm:text-3xl font-extrabold font-mono leading-none ${isExorcised ? "text-emerald-400" : "text-red-500"}`;
+        riskLabel.textContent = isExorcised
+          ? `-${state.blastRadiusReduction}% BLAST RADIUS`
+          : "CRITICAL";
+        riskLabel.className = `shrink-0 text-[10px] sm:text-xs font-mono px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md font-semibold whitespace-nowrap shadow-sm ${
+          isExorcised
+            ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+            : "bg-red-500/20 text-red-300 border border-red-500/30"
+        }`;
+
+        const wildcardsEl = document.getElementById("metricWildcards");
+        wildcardsEl.textContent = state.wildcardCount;
+        wildcardsEl.className = `text-2xl sm:text-3xl font-extrabold font-mono leading-none ${isExorcised ? "text-emerald-400" : "text-red-400"}`;
+
+        const escNode = (state.graphNodes || []).find((n) => n.isEscalation);
+        const escEl = document.getElementById("metricEscalation");
+        escEl.textContent = state.privilegeEscalationRisk
+          ? "ACTIVE (HIGH)"
+          : "EXORCISED (NONE)";
+        escEl.className = `block text-base sm:text-lg font-extrabold font-mono whitespace-nowrap truncate ${state.privilegeEscalationRisk ? "text-red-400" : "text-emerald-400"}`;
+        document.getElementById("metricEscalationTag").textContent = escNode
+          ? escNode.declaredAction
+          : "iam:PassRole";
+
+        const observedActions = state.telemetry?.observedActions || [];
+        const observedContainer = document.getElementById("metricObserved");
+        observedContainer.innerHTML = observedActions.length
+          ? observedActions
+              .map(
+                (act) =>
+                  `<span class="inline-block text-[11px] sm:text-xs font-bold font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded px-2 py-0.5 truncate max-w-full" title="${escapeHtml(act)}">${escapeHtml(act)}</span>`,
+              )
+              .join("")
+          : `<span class="text-xs font-mono text-slate-400">None</span>`;
+        const evCount = state.telemetry?.eventCount || 1;
+        document.getElementById("metricEvents").textContent =
+          `${evCount} ${evCount === 1 ? "Event" : "Events"}`;
+
+        // Dynamic SVG Anatomy Graph
+        renderAnatomyGraph(state);
+
+        // Side-by-Side Surgical AST Diff Panels
+        const removedTokens = (state.graphNodes || []).map(
+          (n) => `"${n.declaredAction}"`,
+        );
+        document.getElementById("codeBefore").innerHTML = state.initialTfContent
+          .split("\n")
+          .map((line) => {
+            const isRemovedLine =
+              removedTokens.some((tok) => line.includes(tok)) ||
+              line.includes('Resource = "*"');
+            if (isExorcised && isRemovedLine) {
+              return `<span class="diff-del">- ${escapeHtml(line)}</span>`;
+            }
+            return "  " + escapeHtml(line);
+          })
+          .join("\n");
+
+        const addedTokens = [
+          "FrankenGuardLeastPrivilege",
+          "Condition",
+          "ArnLike",
+          "aws:SourceArn",
+          ...observedActions.map((a) => `"${a}"`),
+          ...(state.telemetry?.observedResources || []).map((r) => `"${r}"`),
+        ];
+
+        document.getElementById("codeAfter").innerHTML = state.tfContent
+          .split("\n")
+          .map((line) => {
+            const isAddedLine = addedTokens.some((tok) => line.includes(tok));
+            if (isExorcised && isAddedLine) {
+              return `<span class="diff-add">+ ${escapeHtml(line)}</span>`;
+            }
+            return "  " + escapeHtml(line);
+          })
+          .join("\n");
+
+        const btn = document.getElementById("btnExorcise");
+        const btnReset = document.getElementById("btnReset");
+        const guidanceBar = document.getElementById("uxGuidanceBar");
+        const guidanceText = document.getElementById("uxGuidanceText");
+
+        if (isExorcised) {
+          btn.innerHTML = "<span>✅ AST Patch Applied</span>";
+          btn.className =
+            "flex-1 sm:flex-none justify-center px-3.5 py-2.5 sm:py-1.5 rounded-xl sm:rounded-lg text-xs font-semibold bg-emerald-950/80 text-emerald-300 border border-emerald-500/40 cursor-default flex items-center gap-1.5 whitespace-nowrap shrink-0";
+          if (btnReset) {
+            btnReset.innerHTML = "<span>↺ Reset Fixture</span>";
+            btnReset.className =
+              "flex-1 sm:flex-none justify-center px-3.5 py-2.5 sm:py-1.5 rounded-xl sm:rounded-lg text-xs font-medium bg-slate-800/90 hover:bg-slate-700 active:scale-[0.98] text-slate-200 border border-slate-700/80 hover:border-slate-600 transition cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0";
+            btnReset.classList.remove("hidden");
+          }
+          const guidanceBadge = document.getElementById("guidanceBadge");
+          if (guidanceBadge)
+            guidanceBadge.className =
+              "px-2 py-0.5 rounded-md bg-emerald-500/25 text-emerald-300 font-mono text-[11px] sm:text-xs font-bold uppercase whitespace-nowrap shrink-0 border border-emerald-500/30 tracking-wide";
+          if (guidanceBar)
+            guidanceBar.className =
+              "flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 sm:px-4 sm:py-2.5 rounded-xl bg-emerald-950/40 border border-emerald-500/30 text-xs text-slate-300 shadow-sm";
+          if (guidanceText)
+            guidanceText.innerHTML =
+              '<strong class="text-emerald-400">Exorcism Verified:</strong> Least-privilege HCL2 policy enforced. Switch <strong class="text-indigo-300">SCENARIO (5)</strong> or click <strong class="text-white">↺ Reset Fixture</strong> to test another attack vector.';
+        } else {
+          btn.innerHTML = "<span>⚡ Execute AST Exorcism</span>";
+          btn.className =
+            "flex-1 sm:flex-none justify-center px-4 py-2.5 sm:py-1.5 rounded-xl sm:rounded-lg text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] text-white shadow-lg shadow-emerald-600/20 ring-1 ring-emerald-400/50 transition cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0";
+          if (btnReset) {
+            btnReset.innerHTML = "<span>↺ Reset Fixture</span>";
+            btnReset.classList.add("hidden");
+          }
+          const guidanceBadge = document.getElementById("guidanceBadge");
+          if (guidanceBadge)
+            guidanceBadge.className =
+              "px-2 py-0.5 rounded-md bg-indigo-500/25 text-indigo-300 font-mono text-[11px] sm:text-xs font-bold uppercase whitespace-nowrap shrink-0 border border-indigo-500/30 tracking-wide";
+          if (guidanceBar)
+            guidanceBar.className =
+              "flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 sm:px-4 sm:py-2.5 rounded-xl bg-indigo-950/50 border border-indigo-500/30 text-xs text-slate-300 shadow-sm";
+          if (guidanceText)
+            guidanceText.innerHTML =
+              'Copy the prompt (or type <code class="px-1.5 py-0.5 rounded bg-slate-900/90 text-indigo-300 font-mono text-[11px] border border-slate-800">/exorcise-iam</code> in Kiro) for autonomous MCP audit, or click <strong class="text-emerald-400">⚡ Execute AST Exorcism</strong>.';
+        }
+
+        if (
+          window.__lastStatus === "VULNERABLE" &&
+          state.status === "EXORCISED"
+        ) {
+          document.body.classList.remove("exorcism-flash");
+          void document.body.offsetWidth;
+          document.body.classList.add("exorcism-flash");
+          if (window.innerWidth < 1024) {
+            switchDiffTab("after");
+          }
+        }
+        if (
+          window.__lastStatus === "EXORCISED" &&
+          state.status === "VULNERABLE"
+        ) {
+          if (window.innerWidth < 1024) {
+            switchDiffTab("before");
+          }
+        }
+        window.__lastStatus = state.status;
+      }
+
+      let activeDiffTab = "before";
+      function switchDiffTab(tab) {
+        activeDiffTab = tab;
+        const panelBefore = document.getElementById("panelDiffBefore");
+        const panelAfter = document.getElementById("panelDiffAfter");
+        const tabBefore = document.getElementById("diffTabBefore");
+        const tabAfter = document.getElementById("diffTabAfter");
+
+        if (!panelBefore || !panelAfter || !tabBefore || !tabAfter) return;
+
+        if (tab === "before") {
+          panelBefore.classList.remove("hidden");
+          panelBefore.classList.add("flex");
+          panelAfter.classList.add("hidden");
+          panelAfter.classList.remove("flex");
+
+          tabBefore.className =
+            "flex-1 py-2 px-3 rounded-lg text-xs font-mono font-bold transition flex items-center justify-center gap-1.5 bg-slate-800 text-red-400 shadow-sm border border-slate-700/60";
+          const dot = tabBefore.querySelector("span");
+          if (dot) dot.className = "w-2 h-2 rounded-full bg-red-500";
+
+          tabAfter.className =
+            "flex-1 py-2 px-3 rounded-lg text-xs font-mono font-medium text-slate-400 hover:text-emerald-400 transition flex items-center justify-center gap-1.5";
+          const dotAfter = tabAfter.querySelector("span");
+          if (dotAfter) dotAfter.className = "w-2 h-2 rounded-full bg-emerald-500/40";
+        } else {
+          panelAfter.classList.remove("hidden");
+          panelAfter.classList.add("flex");
+          panelBefore.classList.add("hidden");
+          panelBefore.classList.remove("flex");
+
+          tabAfter.className =
+            "flex-1 py-2 px-3 rounded-lg text-xs font-mono font-bold transition flex items-center justify-center gap-1.5 bg-slate-800 text-emerald-400 shadow-sm border border-slate-700/60";
+          const dot = tabAfter.querySelector("span");
+          if (dot) dot.className = "w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]";
+
+          tabBefore.className =
+            "flex-1 py-2 px-3 rounded-lg text-xs font-mono font-medium text-slate-400 hover:text-red-400 transition flex items-center justify-center gap-1.5";
+          const dotBefore = tabBefore.querySelector("span");
+          if (dotBefore) dotBefore.className = "w-2 h-2 rounded-full bg-red-500/40";
+        }
+      }
+
+      const UNIVERSAL_KIRO_PROMPT = [
+        "Act as the FrankenGuard Kiro Crew (Telemetry Auditor, IAM Graph Analyst, and AST Patcher).",
+        "",
+        "1. Follow all guardrails in `.kiro/steering/aws-least-privilege.md` and requirements in `.kiro/specs/iam-exorcism-engine/requirements.md`.",
+        '2. Call the MCP tool `scan_iam_graph` with `tfPath: "demo-fixtures/vulnerable-iam.tf"` and `cloudtrailPath: "demo-fixtures/cloudtrail-sample.json"`.',
+        "3. Identify all unused wildcard permissions and privilege-escalation / lateral-movement vectors (such as `iam:PassRole`, `iam:*`, `iam:CreateAccessKey`, `iam:PutRolePolicy`, or `sts:AssumeRole`).",
+        '4. Call the MCP tool `apply_ast_patch` on `demo-fixtures/vulnerable-iam.tf` for resource `"overprivileged_worker"` using ONLY the observed runtime actions and target ARNs returned in step 2.',
+        "5. Summarize the blast-radius reduction achieved, and confirm Steering Rule 4 (`aws:SourceArn` Condition) and Spec FR-05 validation status from the tool report.",
+      ].join("\n");
+
+      /**
+       * Copies the universal Kiro orchestration prompt directly to the user clipboard.
+       */
+      async function copyKiroPrompt() {
+        const btn = document.getElementById("btnCopyPrompt");
+        try {
+          await navigator.clipboard.writeText(UNIVERSAL_KIRO_PROMPT);
+          btn.textContent = "✔ Copied! Paste in Kiro";
+          btn.className =
+            "flex-1 sm:flex-none justify-center shrink-0 whitespace-nowrap px-3.5 py-2 sm:py-1.5 rounded-lg bg-emerald-600 text-white font-mono text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 shadow-md shadow-emerald-950/50";
+          setTimeout(() => {
+            btn.textContent = "📋 Copy Kiro Prompt";
+            btn.className =
+              "flex-1 sm:flex-none justify-center shrink-0 whitespace-nowrap px-3.5 py-2 sm:py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white font-mono text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 shadow-md shadow-indigo-950/50";
+          }, 2200);
+        } catch (err) {
+          alert("Prompt copied fallback:\n\n" + UNIVERSAL_KIRO_PROMPT);
+        }
+      }
+
+      fetchState();
+      setInterval(fetchState, 1200);
+    </script>
+    <!-- FRANKEN_UI_PRECISION_FIX_START -->
+    <style>
+      body {
+        overflow-x: hidden;
+      }
+
+      /* 1. Enterprise Two-Tier Header Styling */
+      .fg-header-card {
+        padding: 16px 20px !important;
+        background: linear-gradient(
+          180deg,
+          rgba(15, 23, 42, 0.95) 0%,
+          rgba(9, 13, 22, 0.98) 100%
+        ) !important;
+        border: 1px solid rgba(51, 65, 85, 0.65) !important;
+        box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.6) !important;
+      }
+      .fg-tier1-top {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 12px !important;
+        padding-bottom: 12px !important;
+        margin-bottom: 12px !important;
+        border-bottom: 1px solid rgba(30, 41, 59, 0.85) !important;
+      }
+      .fg-tier2-toolbar {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 12px !important;
+        width: 100% !important;
+      }
+
+      /* Dropdown Scenario */
+      .fg-custom-select-wrap {
+        position: relative !important;
+        display: flex !important;
+        align-items: center !important;
+        width: 100% !important;
+        min-width: 0 !important;
+      }
+      @media (min-width: 640px) {
+        .fg-custom-select-wrap {
+          width: auto !important;
+          flex: 1 1 300px !important;
+        }
+      }
+      .fg-custom-select-wrap > span {
+        white-space: nowrap !important;
+        flex-shrink: 0 !important;
+      }
+      .fg-custom-select-wrap select {
+        width: 100% !important;
+        text-overflow: ellipsis !important;
+        overflow: hidden !important;
+        white-space: nowrap !important;
+      }
+
+      /* Custom Dropdown Menu */
+      .fg-custom-menu {
+        position: absolute !important;
+        top: calc(100% + 6px) !important;
+        left: 0 !important;
+        width: 100% !important;
+        min-width: 100% !important;
+        max-width: 100% !important;
+        background: #0f172a !important;
+        border: 1px solid rgba(59, 130, 246, 0.45) !important;
+        border-radius: 0.65rem !important;
+        box-shadow:
+          0 16px 36px -6px rgba(0, 0, 0, 0.9),
+          0 0 0 1px rgba(59, 130, 246, 0.15) !important;
+        z-index: 9999 !important;
+        overflow: hidden !important;
+        display: none;
+      }
+      @media (min-width: 640px) {
+        .fg-custom-menu {
+          width: max-content !important;
+          max-width: min(90vw, 650px) !important;
+        }
+      }
+      .fg-custom-menu.open {
+        display: block !important;
+      }
+      .fg-custom-item {
+        padding: 11px 14px !important;
+        font-size: 12px !important;
+        font-family:
+          ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+        color: #e2e8f0 !important;
+        cursor: pointer !important;
+        border-bottom: 1px solid rgba(30, 41, 59, 0.8) !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+      }
+      .fg-custom-item:last-child {
+        border-bottom: none !important;
+      }
+      .fg-custom-item:hover {
+        background: rgba(37, 99, 235, 0.28) !important;
+        color: #fff !important;
+      }
+      .fg-custom-item.active {
+        background: rgba(37, 99, 235, 0.45) !important;
+        color: #60a5fa !important;
+        font-weight: 600 !important;
+      }
+
+      /* Enforce single-line nowrap for NEXT STEP badge */
+      #guidanceBadge,
+      #uxGuidanceBar span:first-child,
+      #nextStepBanner span:first-child {
+        white-space: nowrap !important;
+        word-break: keep-all !important;
+        text-align: center !important;
+        flex-shrink: 0 !important;
+        display: inline-block !important;
+      }
+
+      /* Desktop: display code diff panels side-by-side */
+      @media (min-width: 1024px) {
+        #panelDiffBefore,
+        #panelDiffAfter {
+          display: flex !important;
+        }
+      }
+
+      /* Refined Sharp SVG Anatomy Graph Styling */
+      #anatomySvg {
+        max-width: 640px !important;
+        margin: 0 auto !important;
+      }
+      #anatomySvg rect {
+        stroke-width: 1.4px !important;
+        shape-rendering: geometricPrecision;
+      }
+      #anatomySvg path {
+        stroke-width: 1.6px !important;
+        shape-rendering: geometricPrecision;
+      }
+      #anatomySvg text {
+        text-rendering: geometricPrecision;
+      }
+    </style>
+    <script>
+      (function () {
+        function buildCustomScenarioDropdown() {
+          const sel = document.querySelector("select");
+          if (!sel || sel.dataset.fgCustomBuilt === "1") return;
+          sel.dataset.fgCustomBuilt = "1";
+
+          const wrapper = sel.parentElement;
+          if (!wrapper) return;
+          wrapper.classList.add("fg-custom-select-wrap");
+          sel.style.pointerEvents = "none";
+          wrapper.style.cursor = "pointer";
+
+          const menu = document.createElement("div");
+          menu.className = "fg-custom-menu";
+          wrapper.appendChild(menu);
+
+          function syncOptions() {
+            menu.innerHTML = "";
+            Array.from(sel.options).forEach((opt, idx) => {
+              const item = document.createElement("div");
+              item.className =
+                "fg-custom-item" + (sel.selectedIndex === idx ? " active" : "");
+              item.textContent = opt.textContent;
+              item.addEventListener("click", (e) => {
+                e.stopPropagation();
+                sel.selectedIndex = idx;
+                sel.dispatchEvent(new Event("change", { bubbles: true }));
+                menu.classList.remove("open");
+                syncOptions();
+              });
+              menu.appendChild(item);
+            });
+          }
+
+          wrapper.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            syncOptions();
+            menu.classList.toggle("open");
+          });
+
+          document.addEventListener("click", () =>
+            menu.classList.remove("open"),
+          );
+        }
+
+        function upgradeEnterpriseHeader() {
+          // Header is natively structured in HTML with clean 2-tier responsive layout
+        }
+
+        function applyEnterprisePolish() {
+          buildCustomScenarioDropdown();
+          upgradeEnterpriseHeader();
+
+          // A. Enforce single-line nowrap for NEXT STEP badge
+          const banner =
+            document.getElementById("uxGuidanceBar") ||
+            document.getElementById("nextStepBanner");
+          if (banner) {
+            banner.querySelectorAll("span").forEach((sp) => {
+              const t = (sp.textContent || "").trim().replace(/\s+/g, " ");
+              if (t.toUpperCase() === "NEXT STEP") {
+                if (sp.textContent !== "NEXT\u00A0STEP")
+                  sp.textContent = "NEXT\u00A0STEP";
+              }
+            });
+          }
+
+          // B. Maintain horizontal flex layout for anatomy graph legends
+          document.querySelectorAll("span, div").forEach((el) => {
+            const txt = (el.textContent || "").trim();
+            if (
+              txt === "Over-Privileged Wildcard" ||
+              txt === "Exorcised Least-Privilege" ||
+              txt === "Severed by AST Patcher"
+            ) {
+              el.style.whiteSpace = "nowrap";
+              el.style.fontSize = "11px";
+              if (el.parentElement) {
+                el.parentElement.style.display = "flex";
+                el.parentElement.style.flexWrap = "wrap";
+                el.parentElement.style.alignItems = "center";
+                el.parentElement.style.gap = "10px";
+              }
+            }
+          });
+
+          // C. Responsive 2x2 / 4x1 grid layout for KPI metric cards
+          document.querySelectorAll(".grid").forEach((g) => {
+            if (g.children.length === 4) {
+              g.style.display = "grid";
+              g.style.gridTemplateColumns =
+                window.innerWidth < 1100
+                  ? "repeat(2, minmax(0, 1fr))"
+                  : "repeat(4, minmax(0, 1fr))";
+              g.style.gap = "0.75rem";
+              Array.from(g.children).forEach((card) => {
+                const topRow = card.firstElementChild;
+                if (topRow && topRow.firstElementChild) {
+                  topRow.firstElementChild.style.fontSize = "10.5px";
+                  topRow.firstElementChild.style.whiteSpace = "nowrap";
+                  topRow.firstElementChild.style.overflow = "hidden";
+                  topRow.firstElementChild.style.textOverflow = "ellipsis";
+                }
+              });
+            }
+          });
+
+          // D. Preserve SVG Tree-Spine responsive topology layout
+          const svg = document.querySelector("svg");
+          if (!svg) return;
+          const rects = Array.from(svg.querySelectorAll("rect"));
+          if (rects.length < 2) return;
+
+          if (svg.innerHTML !== svg.dataset.lastEnterpriseSnap) {
+            const blueRect = rects[0];
+            const actionRects = rects.slice(1);
+            const allTexts = Array.from(svg.querySelectorAll("text"));
+            const paths = Array.from(svg.querySelectorAll("path"));
+            const circles = Array.from(svg.querySelectorAll("circle"));
+
+            const blueTexts = allTexts.slice(0, 3);
+            const actionGroups = actionRects.map((r, idx) => ({
+              rect: r,
+              texts: allTexts.slice(3 + idx * 3, 3 + (idx + 1) * 3),
+              path: paths[idx],
+              circle: circles[idx],
+            }));
+
+            const W = 620;
+            const pX = 20,
+              pY = 12,
+              pW = 580,
+              pH = 62;
+            blueRect.setAttribute("x", String(pX));
+            blueRect.setAttribute("y", String(pY));
+            blueRect.setAttribute("width", String(pW));
+            blueRect.setAttribute("height", String(pH));
+            blueRect.setAttribute("rx", "8");
+            blueRect.setAttribute("stroke-width", "1.4");
+
+            let defs = svg.querySelector("defs");
+            if (!defs) {
+              defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+              svg.insertBefore(defs, svg.firstChild);
+            }
+
+            function fitText(txtEl, maxLen, clipId) {
+              if (!txtEl) return;
+              let raw = txtEl.getAttribute("data-orig");
+              if (!raw) {
+                const clone = txtEl.cloneNode(true);
+                const exTitle = clone.querySelector("title");
+                if (exTitle) exTitle.remove();
+                raw = (clone.textContent || "").trim();
+                txtEl.setAttribute("data-orig", raw);
+              }
+              if (clipId) {
+                txtEl.setAttribute("clip-path", `url(#${clipId})`);
+              }
+              let display = raw;
+              if (raw.length > maxLen) {
+                const keepStart = Math.floor((maxLen - 3) * 0.54);
+                const keepEnd = maxLen - 3 - keepStart;
+                display = `${raw.slice(0, keepStart)}...${raw.slice(-keepEnd)}`;
+              }
+              txtEl.textContent = display;
+              const tNode = document.createElementNS("http://www.w3.org/2000/svg", "title");
+              tNode.textContent = raw;
+              txtEl.appendChild(tNode);
+            }
+
+            if (blueTexts[0]) {
+              blueTexts[0].setAttribute("x", String(pX + 16));
+              blueTexts[0].setAttribute("y", String(pY + 18));
+              blueTexts[0].setAttribute("font-size", "9.5");
+              blueTexts[0].setAttribute("letter-spacing", "0.06em");
+            }
+            if (blueTexts[1]) {
+              blueTexts[1].setAttribute("x", String(pX + 16));
+              blueTexts[1].setAttribute("y", String(pY + 36));
+              blueTexts[1].setAttribute("font-size", "13");
+              fitText(blueTexts[1], 56, null);
+            }
+            if (blueTexts[2]) {
+              blueTexts[2].setAttribute("x", String(pX + 16));
+              blueTexts[2].setAttribute("y", String(pY + 51));
+              blueTexts[2].setAttribute("font-size", "10.5");
+              fitText(blueTexts[2], 68, null);
+            }
+
+            const spineX = 42,
+              spineStartY = pY + pH;
+            const aX = 68,
+              aW = 532,
+              aH = 62,
+              gapY = 10,
+              firstAY = 88,
+              radius = 8;
+
+            actionGroups.forEach((g, idx) => {
+              const aY = firstAY + idx * (aH + gapY);
+              const midY = aY + aH / 2;
+              g.rect.setAttribute("x", String(aX));
+              g.rect.setAttribute("y", String(aY));
+              g.rect.setAttribute("width", String(aW));
+              g.rect.setAttribute("height", String(aH));
+              g.rect.setAttribute("rx", "8");
+              g.rect.setAttribute("stroke-width", "1.4");
+
+              const clipId = `clip-card-${idx}`;
+              let clip = defs.querySelector(`#${clipId}`);
+              if (!clip) {
+                clip = document.createElementNS("http://www.w3.org/2000/svg", "clipPath");
+                clip.setAttribute("id", clipId);
+                const clipRect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                clip.appendChild(clipRect);
+                defs.appendChild(clip);
+              }
+              const clipR = clip.querySelector("rect");
+              if (clipR) {
+                clipR.setAttribute("x", String(aX));
+                clipR.setAttribute("y", String(aY));
+                clipR.setAttribute("width", String(aW - 4));
+                clipR.setAttribute("height", String(aH));
+                clipR.setAttribute("rx", "8");
+              }
+
+              if (g.texts[0]) {
+                g.texts[0].setAttribute("x", String(aX + 16));
+                g.texts[0].setAttribute("y", String(aY + 18));
+                g.texts[0].setAttribute("font-size", "12");
+                fitText(g.texts[0], 58, clipId);
+              }
+              if (g.texts[1]) {
+                g.texts[1].setAttribute("x", String(aX + 16));
+                g.texts[1].setAttribute("y", String(aY + 34));
+                g.texts[1].setAttribute("font-size", "10.5");
+                fitText(g.texts[1], 66, clipId);
+              }
+              if (g.texts[2]) {
+                g.texts[2].setAttribute("x", String(aX + 16));
+                g.texts[2].setAttribute("y", String(aY + 49));
+                g.texts[2].setAttribute("font-size", "10.5");
+                fitText(g.texts[2], 68, clipId);
+              }
+
+              if (g.path) {
+                const d = `M ${spineX} ${spineStartY} L ${spineX} ${midY - radius} Q ${spineX} ${midY} ${spineX + radius} ${midY} L ${aX} ${midY}`;
+                g.path.setAttribute("d", d);
+                g.path.setAttribute("fill", "none");
+                g.path.setAttribute("stroke-width", "1.5");
+              }
+              if (g.circle) {
+                g.circle.setAttribute("cx", String(aX));
+                g.circle.setAttribute("cy", String(midY));
+                g.circle.setAttribute("r", "3.5");
+              }
+            });
+
+            const totalH = firstAY + actionGroups.length * (aH + gapY) + 8;
+            svg.setAttribute("viewBox", `0 0 ${W} ${totalH}`);
+            svg.style.minHeight = totalH + "px";
+            svg.dataset.lastEnterpriseSnap = svg.innerHTML;
+          }
+        }
+
+        window.addEventListener("DOMContentLoaded", applyEnterprisePolish);
+        window.addEventListener("resize", applyEnterprisePolish);
+        const obs = new MutationObserver(applyEnterprisePolish);
+        obs.observe(document.documentElement, {
+          childList: true,
+          subtree: true,
+        });
+        setInterval(applyEnterprisePolish, 250);
+      })();
+    </script>
+    <!-- FRANKEN_UI_PRECISION_FIX_END -->
+  </body>
 </html>
