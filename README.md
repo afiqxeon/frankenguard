@@ -3,6 +3,11 @@
 > **Kiroween 2026 Hackathon Submission (Category: Frankenstein & Best Kiro Crew App)**  
 > Stitching **AWS CloudTrail runtime telemetry**, **Kiro Multi-Agent Spec/Steering guardrails**, and **Tree-sitter HCL2 Abstract Syntax Tree (AST) surgery** into a deterministic least-privilege remediation engine.
 
+### 🎬 Video Demonstrations
+
+- **⚡ 3-Minute Judge Demo Cut:** [Watch on YouTube](https://youtu.be/9X5fDJgfpM0)
+- **🔍 Full Extended Walkthrough:** [Watch on YouTube](https://youtu.be/P4oKy7sF1i8)
+
 [![Docker Compose](https://img.shields.io/badge/Docker_Compose-Zero_Host_Deps-2496ED?logo=docker&logoColor=white)](docker-compose.yml)
 [![Kiro Steering](https://img.shields.io/badge/Kiro_Steering-Rules_1--5-8B5CF6)](.kiro/steering/aws-least-privilege.md)
 [![MCP Protocol](https://img.shields.io/badge/MCP_Server-TCP_:4444-10B981)](.kiro/settings/mcp.json)
@@ -53,6 +58,12 @@ FrankenGuard eliminates non-deterministic file edits by separating **reasoning**
 ```
 
 ---
+
+### 🔗 How Kiro MCP Syncs with the Dashboard in Real Time
+
+1. **Kiro IDE / Crew → MCP Bridge (`.kiro/settings/mcp.json`):** Invoking `/exorcise-iam` triggers JSON-RPC tool calls (`scan_iam_graph` & `apply_ast_patch`) routed over **TCP `:4444`** (with automatic `docker exec` fallback) into the `frankenguard-engine` container.
+2. **Deterministic AST Mutation on Shared Volume:** The C++ Tree-sitter HCL2 engine mutates the target `demo-fixtures/vulnerable-iam.tf` file in-place and updates live MCP telemetry state across the shared Docker volume.
+3. **1.2s Live Auto-Sync Polling (`http://localhost:3000`):** The Monster Anatomy View dashboard continuously polls the backend state every **1.2 seconds**, automatically refreshing the blast-radius score (`96/100 → 8/100`), SVG topology graph, side-by-side HCL2 diff, and footer MCP status badge without requiring a manual page reload.
 
 ## 🧪 Included Real-World AWS Attack Scenarios (`SCENARIO (5):` Selector)
 
